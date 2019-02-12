@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="vision_tools" type="evaluator.py" name="bitbots_vision_evaluator" output="screen" >
+        <rosparam command="load" file="$(find vision_tools)/config/evaluator_params.yaml" />
+    </node>
+</launch>
