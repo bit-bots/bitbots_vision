@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 import rospy
-from humanoid_league_msgs.msg import ImageWithRegionOfInterest
+from humanoid_league_msgs.msg import LineInformationInImage, ObstaclesInImage, BallsInImage
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
 import numpy as np
@@ -10,11 +10,23 @@ import yaml
 import os
 
 
+class ImageMeasurement(object):
+    def __init__(self):
+        self.time_measurements = dict()
+
+    def get_max_duration(self):
+        # returns the maximal duration a measurement in the image took
+        if self.time_measurements.values():
+            return max(self.time_measurements.values())
+        else:
+            return None
+
+
 class Evaluator(object):
     def __init__(self):
         rospy.init_node("vision_evaluator")
 
-        rospy.Subscriber(rospy.get_param("fcnn_image_topic", "fcnn_image"),
+        rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
                          ImageWithRegionOfInterest,
                          self._callback_fcnn,
                          queue_size=1,
@@ -51,7 +63,8 @@ class Evaluator(object):
 
         self.image_pub.publish(self.bridge.cv2_to_imgmsg(output_image, 'bgr8'))
 
-    def _resend_callback(self):
+    def _resend_callback(self, event):
+        self._send_image(self._get_current_image_name())
         pass
 
     def _get_current_image_name(self):
@@ -59,6 +72,12 @@ class Evaluator(object):
 
     def _get_current_labels(self):
         return self._images[self._image_counter]['annotations']
+
+    def _update_image_counter(self, seq):
+        # updates the image counter to publish a new image when necessary
+        # (it was not updated already by an other callback)
+        if self._image_counter <= seq:
+            self._image_counter += 1
 
     def _send_image(self, name):
         imgpath = os.path.join(self._image_path, name)
@@ -68,10 +87,11 @@ class Evaluator(object):
             return
         msg = self.bridge.cv2_to_imgmsg(image)
         msg.header.stamp = rospy.get_rostime()
+        msg.header.seq = self._image_counter
         self._image_pub.publish(msg)
 
-
     def _read_labels(self, filename):
+        # reads the labels YAML file and returns a list of image names with their labels
         filepath = os.path.join(self._image_path, filename)
 
         with open(filepath, 'r') as stream:
@@ -80,6 +100,18 @@ class Evaluator(object):
             except yaml.YAMLError as exc:
                 rospy.logerr(exc)
         return images
+
+    def _balls_callback(self, msg):
+        pass
+
+    def _obstacles_callback(self, msg):
+        pass
+
+    def _goalpost_callback(self, msg):
+        pass
+
+    def _lines_callback(self, msg):
+        pass
 
 if __name__ == "__main__":
     Evaluator()
