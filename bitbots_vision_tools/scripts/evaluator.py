@@ -26,13 +26,32 @@ class Evaluator(object):
     def __init__(self):
         rospy.init_node("vision_evaluator")
 
-        rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
-                         ImageWithRegionOfInterest,
-                         self._callback_fcnn,
-                         queue_size=1,
-                         tcp_nodelay=True,
-                         buff_size=60000000)
-            # https://github.com/ros/ros_comm/issues/536
+        self._ball_sub = None
+        if rospy.get_param("listen_balls", False):
+            rospy.loginfo('listening for balls in image...')
+            self._ball_sub = rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
+                 BallsInImage,
+                 self._balls_callback(),
+                 queue_size=1,
+                 tcp_nodelay=True)
+
+        self._line_sub = None
+        if rospy.get_param("listen_lines", False):
+            rospy.loginfo('listening for lines in image...')
+            self._line_sub = rospy.Subscriber(rospy.get_param("lines_topic", "lines_in_image"),
+                 LineInformationInImage,
+                 self._lines_callback(),
+                 queue_size=1,
+                 tcp_nodelay=True)
+
+        self._obstacle_sub = None
+        if rospy.get_param("listen_obstacle", False):
+            rospy.loginfo('listening for obstacles in image...')
+            self._line_sub = rospy.Subscriber(rospy.get_param("obstacles_topic", "obstacles_in_image"),
+                 ObstaclesInImage,
+                 self._obstacles_callback(),
+                 queue_size=1,
+                 tcp_nodelay=True)
 
         self._image_pub = rospy.Publisher('image_raw', Image, queue_size=1)
 
