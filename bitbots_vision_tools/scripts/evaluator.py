@@ -76,19 +76,9 @@ class Evaluator(object):
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
         self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
 
+        self._measurements = dict()
+
         rospy.spin()
-
-    def _callback_fcnn(self, msg):
-        input_image = self.bridge.imgmsg_to_cv2(msg.image, 'bgr8')  # TODO: evaluate this!!!
-        print(input_image.shape)
-        print((int(msg.regionOfInterest.width) + 1, int(msg.regionOfInterest.height) + 1))
-        input_image = cv2.resize(input_image, (int(msg.regionOfInterest.width) + 1, int(msg.regionOfInterest.height) + 1))
-
-        output_image = np.zeros((self.initial_image_size[1], self.initial_image_size[0], 3), dtype=np.uint8)
-        output_image[:,:,0] = 180  # everything is dark blue
-        output_image[int(msg.regionOfInterest.y_offset):int(msg.regionOfInterest.y_offset + msg.regionOfInterest.height) + 1, int(msg.regionOfInterest.x_offset):int(msg.regionOfInterest.x_offset + msg.regionOfInterest.width) + 1] = input_image  # copying the image into the empty frame
-
-        self.image_pub.publish(self.bridge.cv2_to_imgmsg(output_image, 'bgr8'))
 
     def _resend_callback(self, event):
         self._send_image(self._get_current_image_name())
@@ -111,7 +101,7 @@ class Evaluator(object):
         imgpath = os.path.join(self._image_path, name)
         image = cv2.imread(imgpath)
         if image is None:
-            rospy.logwarn('Could not open image {} at path {}'.format(name, self.image_path))
+            rospy.logwarn('Could not open image {} at path {}'.format(name, self._image_path))
             return
         msg = self.bridge.cv2_to_imgmsg(image)
         msg.header.stamp = rospy.get_rostime()
@@ -125,7 +115,7 @@ class Evaluator(object):
     def _read_labels(self, filename):
         # reads the labels YAML file and returns a list of image names with their labels
         filepath = os.path.join(self._image_path, filename)
-
+        images = None
         with open(filepath, 'r') as stream:
             try:
                 images = yaml.load(stream)['labels']
@@ -144,6 +134,10 @@ class Evaluator(object):
 
     def _lines_callback(self, msg):
         pass
+
+    def _log_timing(self, header, category):
+        # calculating and saving the time the processing took for the category
+        self._measurements[header.seq].time_measurements[category] = rospy.get_rostime() - header.stamp
 
 if __name__ == "__main__":
     Evaluator()
