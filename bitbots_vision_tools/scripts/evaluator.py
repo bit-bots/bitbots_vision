@@ -124,18 +124,22 @@ class Evaluator(object):
         return images
 
     def _balls_callback(self, msg):
-        pass
+        # measure duration of processing
+        self._measure_timing(msg.header, 'balls')
 
     def _obstacles_callback(self, msg):
-        pass
+        # measure duration of processing
+        self._measure_timing(msg.header, 'obstacles')
 
     def _goalpost_callback(self, msg):
-        pass
+        # measure duration of processing
+        self._measure_timing(msg.header, 'goalposts')
 
     def _lines_callback(self, msg):
-        pass
+        # measure duration of processing
+        self._measure_timing(msg.header, 'lines')
 
-    def _log_timing(self, header, category):
+    def _measure_timing(self, header, category):
         # calculating and saving the time the processing took for the category
         self._measurements[header.seq].time_measurements[category] = rospy.get_rostime() - header.stamp
 
