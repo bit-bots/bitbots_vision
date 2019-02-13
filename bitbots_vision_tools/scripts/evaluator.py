@@ -81,14 +81,14 @@ class Evaluator(object):
         rospy.spin()
 
     def _resend_callback(self, event):
-        self._send_image(self._get_current_image_name())
+        self._send_image(self._get_send_image_name())
         pass
 
-    def _get_current_image_name(self):
-        return self._images[self._image_counter]['name']
+    def _get_send_image_name(self):
+        return self._images[self._send_image_counter]['name']
 
     def _get_current_labels(self):
-        return self._images[self._image_counter]['annotations']
+        return self._images[self._current_image_counter]['annotations']
 
     def _update_image_counter(self, seq):
         # updates the image counter to publish a new image when necessary
