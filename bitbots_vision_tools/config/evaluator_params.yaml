@@ -1,17 +1,7 @@
-folder_path: 'path'
-label_file_name: 'labels.yaml'
-output_file_path: '/tmp'
-
 image_publish_topic: 'image_raw'
 resend_timer_duration: 2  # seconds
 
-listen_balls: True
 balls_topic: 'balls_in_image'
-listen_obstacles: True
 obstacles_topic: 'obstacles_in_image'
-listen_lines: True
 lines_topic: 'lines_in_image'
-listen_goalposts: False  # currently not working
 goalposts_topic: 'balls_in_image'
-
-loop_images: False  # currently not working
