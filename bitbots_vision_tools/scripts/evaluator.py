@@ -73,7 +73,8 @@ class Evaluator(object):
 
         self.bridge = CvBridge()
 
-        self._image_counter = 0  # represents the current image index in the list defined by the label yaml file
+        self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
+        self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
 
         rospy.spin()
 
@@ -102,8 +103,9 @@ class Evaluator(object):
     def _update_image_counter(self, seq):
         # updates the image counter to publish a new image when necessary
         # (it was not updated already by an other callback)
-        if self._image_counter <= seq:
-            self._image_counter += 1
+        # TODO: do loop stuff here!
+        if self._send_image_counter <= seq:
+            self._send_image_counter += 1
 
     def _send_image(self, name):
         imgpath = os.path.join(self._image_path, name)
@@ -113,8 +115,12 @@ class Evaluator(object):
             return
         msg = self.bridge.cv2_to_imgmsg(image)
         msg.header.stamp = rospy.get_rostime()
-        msg.header.seq = self._image_counter
+        msg.header.seq = self._send_image_counter
         self._image_pub.publish(msg)
+        self._current_image_counter = self._send_image_counter  # update the current image counter to the new current image
+
+        # set up evaluation element in measurements list
+        self._measurements[self._send_image_counter] = ImageMeasurement()
 
     def _read_labels(self, filename):
         # reads the labels YAML file and returns a list of image names with their labels
