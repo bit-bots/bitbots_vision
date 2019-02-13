@@ -9,10 +9,17 @@ import cv2
 import yaml
 import os
 
+class Evaluation(object):
+    def __init__(self):
+        self.received_message = False  # boolean signaling whether a message of the type was received
+
 
 class ImageMeasurement(object):
     def __init__(self):
         self.time_measurements = dict()
+        self.ball_evaluation = Evaluation()
+        self.line_evaluation = Evaluation()
+        self.obstacle_evaluation = Evaluation()
 
     def get_max_duration(self):
         # returns the maximal duration a measurement in the image took
