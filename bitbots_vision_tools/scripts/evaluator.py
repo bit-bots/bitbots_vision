@@ -77,6 +77,7 @@ class Evaluator(object):
 
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
         self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
+        self._image_size = None  # tuple (height, width)
 
         self._measurements = dict()
 
@@ -105,6 +106,10 @@ class Evaluator(object):
         if image is None:
             rospy.logwarn('Could not open image {} at path {}'.format(name, self._image_path))
             return
+
+        if self._image_size is None:
+            self._image_size = image.shape[:-1]
+
         msg = self.bridge.cv2_to_imgmsg(image)
         msg.header.stamp = rospy.get_rostime()
         msg.header.seq = self._send_image_counter
