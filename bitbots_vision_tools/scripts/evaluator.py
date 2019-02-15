@@ -64,6 +64,8 @@ class Evaluator(object):
 
         self._image_path = '~/images'
 
+        self._line_thickness = 3
+
         # read label YAML file
         self._label_filename = 'labels.yaml'
         self._images = self._read_labels(self._label_filename)
@@ -143,9 +145,69 @@ class Evaluator(object):
         # calculating and saving the time the processing took for the category
         self._measurements[header.seq].time_measurements[category] = rospy.get_rostime() - header.stamp
 
+    def _generate_polygon_mask_from_vectors(self, vectors):
+        mask = np.zeros(self._image_size)
+
+        for vector in vectors:
+            cv2.fillConvexPoly(mask, vector, 1.0)
+        return mask
+
+    def _generate_rectangle_mask_from_vectors(self, vectors):
+        mask = np.zeros(self._image_size)
+
+        for vector in vectors:
+            cv2.rectangle(mask, vector[0], vector[1], 1.0, thickness=-1)
+        return mask
+
+    def _generate_circle_mask_from_vectors(self, vectors):
+        mask = np.zeros(self._image_size)
+
+        for vector in vectors:
+            center = (vector[0][0] + (vector[1][0] - vector[0][0]) / 2, vector[0][1] + (vector[1][1] - vector[0][1]) / 2)
+            radius = ((vector[1][0] - vector[0][0]) / 2 + (vector[1][1] - vector[0][1]) / 2) / 2
+            cv2.circle(mask, center, radius, 1.0, thickness=-1)
+        return mask
+
+    def _generate_line_mask_from_vectors(self, vectors):
+        mask = np.zeros(self._image_size)
+        for vector in vectors:
+            cv2.line(mask, vector[0], vector[1], 1.0, thickness=self._line_thickness)
+        return mask
+
+    def _generate_ball_mask_from_msg(self, msg):
+        mask = np.zeros(self._image_size)
+        for ball in msg.candidates:
+            cv2.circle(mask, (int(round(ball.center.x)), int(round(ball.center.y))), int(round(ball.diameter/2)), 1.0, thickness=-1)
+        return mask
+
+    def _generate_obstacle_mask_from_msg(self, msg):
+        vectors = list()
+        for obstacle in msg.obstacles:
+            vector = ((obstacle.top_left.x, obstacle.top_left.y), (obstacle.top_left.x + obstacle.width, obstacle.top_left.y + obstacle.height))
+            vectors.append(vector)
+        return self._generate_rectangle_mask_from_vectors(vectors)
+
+    def _generate_line_mask_from_msg(self, msg):
+        mask = np.zeros(self._image_size)
+        for line in msg.segments:
+            cv2.line(mask, (int(round(line.start.x)), int(round(line.start.y))), (int(round(line.end.x)), int(round(line.end.y))), 1.0, thickness=self._line_thickness)
+        return mask
 
     @staticmethod
-    def _analyze_labels(images):
+    def _filter_type(annotations, typename):
+        # returns the annotations of type TYPE
+        return [annotation for annotation in annotations if annotation['type'] == typename]
+
+    @staticmethod
+    def _extract_vectors_from_annotations(annotations, typename=None):
+        # returns the vectors of annotations of type TYPE
+        if typename:
+            return [annotation['vector'] for annotation in annotations if annotation['type'] == typename]
+        return [annotation['vector'] for annotation in annotations]
+
+        # returns the annotations of type TYPE
+
+    def _analyze_labels(self):
         # analyzes the label file for stuff
         # honestly, i am so sorry for this!
         # TODO: this should be done with dicts...
