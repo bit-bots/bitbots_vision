@@ -24,7 +24,6 @@ class ImageMeasurement(object):
         for eval_class in eval_classes:
             self.evaluations[eval_class] = Evaluation()
 
-
     def get_max_duration(self):
         # returns the maximal duration a measurement in the image took
         max_duration = None
@@ -79,9 +78,12 @@ class Evaluator(object):
 
         self._line_thickness = 3
 
+
         # read label YAML file
-        self._label_filename = 'labels.yaml'
+        self._label_filename = rospy.get_param('label_file_name')
+        rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
         self._images = self._read_labels(self._label_filename)
+        rospy.loginfo('Done reading label-file.'.format(self._label_filename))
 
         # initialize resend timer
         self._resend_timer = rospy.Timer(rospy.Duration(2), self._resend_callback) # 2 second timer TODO: make this a variable
