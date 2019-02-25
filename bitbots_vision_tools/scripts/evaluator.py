@@ -214,97 +214,41 @@ class Evaluator(object):
 
     def _analyze_labels(self):
         # analyzes the label file for stuff
-        # honestly, i am so sorry for this!
-        # TODO: this should be done with dicts...
 
-        no_ball_count = 0
-        no_line_count = 0
-        no_obstacle_count = 0
-        no_goalpost_count = 0
+        not_in_image_count = dict()
+        for eval_class in self._evaluated_classes:
+            not_in_image_count[eval_class] = 0
+
         remove_list = list()  # image names of images which need to be removed
-        for image in images:
-            ball_label = False
-            line_label = False
-            obstacle_label = False
-            goalpost_label = False
-            ball_in = None
-            line_in = None
-            obstacle_in = None
-            goalpost_in = None
+        for image in self._images:
+            in_image = dict()
+            found_label = dict()
+            for eval_class in self._evaluated_classes:
+                found_label[eval_class] = False
+                in_image[eval_class] = None
+
             for annotation in image['annotations']:
-                if annotation['type'] == 'ball':
-                    ball_label = True
-                    if ball_in == True:
-                        if not annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    elif ball_in == False:
-                        if annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    else:  # it is None and therefor not set yet
-                        ball_in = annotation['in']
-
-                elif annotation['type'] == 'line':
-                    line_label = True
-                    if line_in == True:
-                        if not annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    elif line_in == False:
-                        if annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    else:  # it is None and therefor not set yet
-                        line_in = annotation['in']
-
-                elif annotation['type'] == 'obstacle':
-                    obstacle_label = True
-                    if obstacle_in == True:
-                        if not annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    elif obstacle_in == False:
-                        if annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    else:  # it is None and therefor not set yet
-                        obstacle_in = annotation['in']
-
-                elif annotation['type'] == 'goalpost':
-                    goalpost_label = True
-                    if goalpost_in == True:
-                        if not annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    elif goalpost_in == False:
-                        if annotation['in']:  # contradiction!
-                            rospy.logwarn('Found contradicting labels in image \"{}\"! The image will be removed!'.format(image['name']))
-                            remove_list.append(image['name'])
-                            break
-                    else:  # it is None and therefor not set yet
-                        goalpost_in = annotation['in']
-
-                else:
-                    # an unknown label type... should we do something?
-                    pass
+                if annotation['type'] not in self._evaluated_classes:
+                    continue  # ignore other classes annotations
+                # annotation type is in evaluated classes
+                found_label[annotation['type']] = True
+                if in_image[annotation['type']] == True:
+                    if not annotation['in']:  # contradiction!
+                        rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
+                        remove_list.append(image['name'])
+                        break
+                elif in_image[annotation['type']]  == False:
+                    if annotation['in']:  # contradiction!
+                        rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
+                        remove_list.append(image['name'])
+                        break
+                else:  # it is None and therefor not set yet
+                    in_image[annotation['type']]  = annotation['in']
 
             # increase the counters when no label was found for a type
-            if not ball_label:
-                no_ball_count += 1
-            if not line_label:
-                no_line_count += 1
-            if not obstacle_label:
-                no_obstacle_count += 1
-            if not goalpost_label:
-                no_goalpost_count += 1
+            for eval_class in self._evaluated_classes:
+                if not found_label[eval_class]:
+                    not_in_image_count[eval_class] += 1
 
 
 
