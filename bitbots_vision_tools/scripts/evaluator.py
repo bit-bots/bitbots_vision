@@ -92,6 +92,7 @@ class Evaluator(object):
 
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
         self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
+        self._image_count = len(self._images)  # number of images (important for loop stuff)
         self._image_size = None  # tuple (height, width)
 
         self._measurements = dict()
@@ -147,9 +148,23 @@ class Evaluator(object):
                 rospy.logerr(exc)
         return images
 
+    def _get_image_measurement(self, image_sequence):
+        if image_sequence not in self._measurements.keys():
+            rospy.logerr('got an unknown image with seq {}! Is there a ROS-bag running? Stop it please!'.format(image_sequence))
+            return
+        return self._measurements[image_sequence]
+
     def _balls_callback(self, msg):
+        measurement = self._get_image_measurement(msg.header.seq).evaluations['ball']
+        # mark as received
+        measurement.received_message = True
         # measure duration of processing
-        self._measure_timing(msg.header, 'balls')
+        measurement.duration = self._measure_timing(msg.header)
+        # match masks
+        measurement.pixel_mask_rates = self._match_masks(self._generate_circle_mask_from_vectors(Evaluator._extract_vectors_from_annotations(self._images[msg.header.seq]['annotations'], typename='ball')), self._generate_ball_mask_from_msg(msg))
+
+        if self._recieved_all_messages_for_image(msg.header.seq):
+            self._send_image()
 
     def _obstacles_callback(self, msg):
         # measure duration of processing
