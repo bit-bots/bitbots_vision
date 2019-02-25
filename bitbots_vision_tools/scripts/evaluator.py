@@ -15,18 +15,19 @@ class Evaluation(object):
 
 
 class ImageMeasurement(object):
-    def __init__(self):
-        self.time_measurements = dict()
-        self.ball_evaluation = Evaluation()
-        self.line_evaluation = Evaluation()
-        self.obstacle_evaluation = Evaluation()
+    def __init__(self, eval_classes):
+        self.evaluations = dict()
+        for eval_class in eval_classes:
+            self.evaluations[eval_class] = Evaluation()
+
 
     def get_max_duration(self):
         # returns the maximal duration a measurement in the image took
-        if self.time_measurements.values():
-            return max(self.time_measurements.values())
-        else:
-            return None
+        max_duration = None
+        for eval in self.evaluations.values():
+            if eval.duration is not None and eval.duration > max_duration:
+                max_duration = eval.duration
+        return max_duration
 
 
 class Evaluator(object):
