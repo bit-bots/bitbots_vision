@@ -222,6 +222,13 @@ class Evaluator(object):
         rates['dn'] = 1 - rates['dp']  # because all the other pixels have to be negative
         return rates
 
+    def _recieved_all_messages_for_image(self, image_seq):
+        measurement = self._measurements[image_seq]
+        for eval_class in self._evaluated_classes:
+            if not measurement.evaluations[eval_class].received_message:
+                return False
+        return True
+
     @staticmethod
     def _filter_type(annotations, typename):
         # returns the annotations of type TYPE
