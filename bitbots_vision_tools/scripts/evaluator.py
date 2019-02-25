@@ -199,6 +199,21 @@ class Evaluator(object):
         return mask
 
     @staticmethod
+    def _match_masks(label_mask, detected_mask):
+        # WARNING: the mask has to be filled with 0 and 1 es
+        # matches the masks onto each other to determine multiple measurements.
+        rates = dict()
+        rates['tp'] = np.mean((np.bitwise_and(label_mask, detected_mask)))
+        rates['tn'] = np.mean(np.bitwise_not(np.bitwise_or(label_mask, detected_mask)))
+        rates['fp'] = np.mean(np.bitwise_and(detected_mask, np.bitwise_not(label_mask)))
+        rates['fn'] = np.mean(np.bitwise_and(np.bitwise_not(detected_mask), label_mask))
+        rates['lp'] = np.mean(label_mask)
+        rates['ln'] = 1 - rates['lp']  # because all the other pixels have to be negative
+        rates['dp'] = np.mean(detected_mask)
+        rates['dn'] = 1 - rates['dp']  # because all the other pixels have to be negative
+        return rates
+
+    @staticmethod
     def _filter_type(annotations, typename):
         # returns the annotations of type TYPE
         return [annotation for annotation in annotations if annotation['type'] == typename]
