@@ -161,9 +161,9 @@ class Evaluator(object):
         # measure duration of processing
         self._measure_timing(msg.header, 'lines')
 
-    def _measure_timing(self, header, category):
-        # calculating and saving the time the processing took for the category
-        self._measurements[header.seq].time_measurements[category] = rospy.get_rostime() - header.stamp
+    def _measure_timing(self, header):
+        # calculating the time the processing took
+        return rospy.get_rostime() - header.stamp
 
     def _generate_polygon_mask_from_vectors(self, vectors):
         mask = np.zeros(self._image_size)
