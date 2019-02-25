@@ -33,9 +33,13 @@ class Evaluator(object):
     def __init__(self):
         rospy.init_node("vision_evaluator")
 
+
+        self._evaluated_classes = list()
+
         self._ball_sub = None
         if rospy.get_param("listen_balls", False):
             rospy.loginfo('listening for balls in image...')
+            self._evaluated_classes.append('ball')
             self._ball_sub = rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
                  BallsInImage,
                  self._balls_callback(),
@@ -45,6 +49,7 @@ class Evaluator(object):
         self._line_sub = None
         if rospy.get_param("listen_lines", False):
             rospy.loginfo('listening for lines in image...')
+            self._evaluated_classes.append('line')
             self._line_sub = rospy.Subscriber(rospy.get_param("lines_topic", "lines_in_image"),
                  LineInformationInImage,
                  self._lines_callback(),
@@ -54,6 +59,9 @@ class Evaluator(object):
         self._obstacle_sub = None
         if rospy.get_param("listen_obstacle", False):
             rospy.loginfo('listening for obstacles in image...')
+            self._evaluated_classes.append('obstacle')
+            self._evaluated_classes.append('goalpost')
+            self._evaluated_classes.append('robot')
             self._line_sub = rospy.Subscriber(rospy.get_param("obstacles_topic", "obstacles_in_image"),
                  ObstaclesInImage,
                  self._obstacles_callback(),
