@@ -161,22 +161,73 @@ class Evaluator(object):
         # measure duration of processing
         measurement.duration = self._measure_timing(msg.header)
         # match masks
-        measurement.pixel_mask_rates = self._match_masks(self._generate_circle_mask_from_vectors(Evaluator._extract_vectors_from_annotations(self._images[msg.header.seq]['annotations'], typename='ball')), self._generate_ball_mask_from_msg(msg))
+        measurement.pixel_mask_rates = self._match_masks(
+            self._generate_circle_mask_from_vectors(
+                Evaluator._extract_vectors_from_annotations(
+                    self._images[msg.header.seq]['annotations'],
+                    typename='ball'
+                )),
+            self._generate_ball_mask_from_msg(msg))
 
         if self._recieved_all_messages_for_image(msg.header.seq):
             self._send_image()
 
     def _obstacles_callback(self, msg):
+        # getting the measurement which is set here
+        measurement = self._get_image_measurement(msg.header.seq).evaluations['obstacle']
+        # mark as received
+        measurement.received_message = True
         # measure duration of processing
-        self._measure_timing(msg.header, 'obstacles')
+        measurement.duration = self._measure_timing(msg.header)
+        # match masks
+        measurement.pixel_mask_rates = self._match_masks(
+            self._generate_rectangle_mask_from_vectors(
+                Evaluator._extract_vectors_from_annotations(
+                    self._images[msg.header.seq]['annotations'],
+                    typename='obstacle'
+                )),
+            self._generate_obstacle_mask_from_msg(msg))
+
+        if self._recieved_all_messages_for_image(msg.header.seq):
+            self._send_image()
 
     def _goalpost_callback(self, msg):
+        # getting the measurement which is set here
+        measurement = self._get_image_measurement(msg.header.seq).evaluations['goalpost']
+        # mark as received
+        measurement.received_message = True
         # measure duration of processing
-        self._measure_timing(msg.header, 'goalposts')
+        measurement.duration = self._measure_timing(msg.header)
+        # match masks
+        measurement.pixel_mask_rates = self._match_masks(
+            self._generate_rectangle_mask_from_vectors(
+                Evaluator._extract_vectors_from_annotations(
+                    self._images[msg.header.seq]['annotations'],
+                    typename='goalpost'
+                )),
+            self._generate_obstacle_mask_from_msg(msg))
+
+        if self._recieved_all_messages_for_image(msg.header.seq):
+            self._send_image()
 
     def _lines_callback(self, msg):
+        # getting the measurement which is set here
+        measurement = self._get_image_measurement(msg.header.seq).evaluations['line']
+        # mark as received
+        measurement.received_message = True
         # measure duration of processing
-        self._measure_timing(msg.header, 'lines')
+        measurement.duration = self._measure_timing(msg.header)
+        # generating and matching masks
+        measurement.pixel_mask_rates = self._match_masks(
+            self._generate_line_mask_from_vectors(
+                Evaluator._extract_vectors_from_annotations(
+                    self._images[msg.header.seq]['annotations'],
+                    typename='line'
+                )),
+            self._generate_line_mask_from_msg(msg))
+
+        if self._recieved_all_messages_for_image(msg.header.seq):
+            self._send_image()
 
     def _measure_timing(self, header):
         # calculating the time the processing took
@@ -297,7 +348,7 @@ class Evaluator(object):
                         remove_list.append(image['name'])
                         break
                 else:  # it is None and therefor not set yet
-                    in_image[annotation['type']]  = annotation['in']
+                    in_image[annotation['type']] = annotation['in']
 
             # increase the counters when no label was found for a type
             for eval_class in self._evaluated_classes:
