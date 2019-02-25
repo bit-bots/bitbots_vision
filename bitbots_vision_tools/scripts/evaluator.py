@@ -9,9 +9,13 @@ import cv2
 import yaml
 import os
 
+
 class Evaluation(object):
+
     def __init__(self):
         self.received_message = False  # boolean signaling whether a message of the type was received
+        self.pixel_mask_rates = None
+        self.duration = None
 
 
 class ImageMeasurement(object):
