@@ -115,7 +115,9 @@ class Evaluator(object):
         if self._send_image_counter <= seq:
             self._send_image_counter += 1
 
-    def _send_image(self, name):
+    def _send_image(self, name = None):
+        if name is None:
+            name = self._get_send_image_name()
         imgpath = os.path.join(self._image_path, name)
         image = cv2.imread(imgpath)
         if image is None:
