@@ -25,6 +25,12 @@ class ImageMeasurement(object):
         for eval_class in eval_classes:
             self.evaluations[eval_class] = Evaluation()
 
+    def serialize(self):
+        return {
+            'evaluations': {eval_class: vars(self.evaluations[eval_class]) for eval_class in self.evaluations.keys()},
+            'image_data': self.image_data
+        }
+
     def get_max_duration(self):
         # returns the maximal duration a measurement in the image took
         max_duration = None
