@@ -158,7 +158,8 @@ class Evaluator(object):
         # building and sending message
         msg = self.bridge.cv2_to_imgmsg(image, 'bgr8')
         msg.header.stamp = rospy.get_rostime()
-        msg.header.seq = self._send_image_counter
+        msg.header.frame_id = str(self._send_image_counter)
+        rospy.loginfo('sending image {} of {} (starting by 0).'.format(self._send_image_counter, self._image_count))
         self._image_pub.publish(msg)
         self._current_image_counter = self._send_image_counter  # update the current image counter to the new current image
 
@@ -183,7 +184,7 @@ class Evaluator(object):
         return self._measurements[image_sequence]
 
     def _balls_callback(self, msg):
-        measurement = self._get_image_measurement(msg.header.seq).evaluations['ball']
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['ball']
         # mark as received
         measurement.received_message = True
         # measure duration of processing
@@ -192,7 +193,7 @@ class Evaluator(object):
         measurement.pixel_mask_rates = self._match_masks(
             self._generate_circle_mask_from_vectors(
                 Evaluator._extract_vectors_from_annotations(
-                    self._images[msg.header.seq]['annotations'],
+                    self._images[int(msg.header.frame_id)]['annotations'],
                     typename='ball'
                 )),
             self._generate_ball_mask_from_msg(msg))
@@ -202,7 +203,7 @@ class Evaluator(object):
 
     def _obstacles_callback(self, msg):
         # getting the measurement which is set here
-        measurement = self._get_image_measurement(msg.header.seq).evaluations['obstacle']
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['obstacle']
         # mark as received
         measurement.received_message = True
         # measure duration of processing
@@ -211,7 +212,7 @@ class Evaluator(object):
         measurement.pixel_mask_rates = self._match_masks(
             self._generate_rectangle_mask_from_vectors(
                 Evaluator._extract_vectors_from_annotations(
-                    self._images[msg.header.seq]['annotations'],
+                    self._images[int(msg.header.frame_id)]['annotations'],
                     typename='obstacle'
                 )),
             self._generate_obstacle_mask_from_msg(msg))
@@ -221,7 +222,7 @@ class Evaluator(object):
 
     def _goalpost_callback(self, msg):
         # getting the measurement which is set here
-        measurement = self._get_image_measurement(msg.header.seq).evaluations['goalpost']
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['goalpost']
         # mark as received
         measurement.received_message = True
         # measure duration of processing
@@ -230,7 +231,7 @@ class Evaluator(object):
         measurement.pixel_mask_rates = self._match_masks(
             self._generate_rectangle_mask_from_vectors(
                 Evaluator._extract_vectors_from_annotations(
-                    self._images[msg.header.seq]['annotations'],
+                    self._images[int(msg.header.frame_id)]['annotations'],
                     typename='goalpost'
                 )),
             self._generate_obstacle_mask_from_msg(msg))
@@ -240,7 +241,7 @@ class Evaluator(object):
 
     def _lines_callback(self, msg):
         # getting the measurement which is set here
-        measurement = self._get_image_measurement(msg.header.seq).evaluations['line']
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['line']
         # mark as received
         measurement.received_message = True
         # measure duration of processing
@@ -249,7 +250,7 @@ class Evaluator(object):
         measurement.pixel_mask_rates = self._match_masks(
             self._generate_line_mask_from_vectors(
                 Evaluator._extract_vectors_from_annotations(
-                    self._images[msg.header.seq]['annotations'],
+                    self._images[int(msg.header.frame_id)]['annotations'],
                     typename='line'
                 )),
             self._generate_line_mask_from_msg(msg))
