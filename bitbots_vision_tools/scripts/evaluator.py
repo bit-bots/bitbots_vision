@@ -19,8 +19,9 @@ class Evaluation(object):
 
 
 class ImageMeasurement(object):
-    def __init__(self, eval_classes):
+    def __init__(self, image_data, eval_classes):
         self.evaluations = dict()
+        self.image_data = image_data
         for eval_class in eval_classes:
             self.evaluations[eval_class] = Evaluation()
 
@@ -138,7 +139,7 @@ class Evaluator(object):
         self._current_image_counter = self._send_image_counter  # update the current image counter to the new current image
 
         # set up evaluation element in measurements list
-        self._measurements[self._send_image_counter] = ImageMeasurement()
+        self._measurements[self._send_image_counter] = ImageMeasurement(self._images[self._send_image_counter], self._evaluated_classes)
 
     def _read_labels(self, filename):
         # reads the labels YAML file and returns a list of image names with their labels
