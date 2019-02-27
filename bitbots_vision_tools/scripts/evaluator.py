@@ -8,6 +8,7 @@ from cv_bridge import CvBridge
 import cv2
 import yaml
 import os
+import signal
 
 
 class Evaluation(object):
@@ -107,7 +108,16 @@ class Evaluator(object):
 
         self._measurements = dict()
 
+        # Stop-Stuff
+        self._stop = False  # stop flag to handle kills
+        signal.signal(signal.SIGINT, self._kill_callback())
+        signal.signal(signal.SIGTERM, self._kill_callback())
+
         rospy.spin()
+
+    def _kill_callback(self):
+        # the rest of the process is handled in the send_image method
+        self._stop = True
 
     def _resend_callback(self, event):
         self._send_image(self._get_send_image_name())
@@ -126,7 +136,15 @@ class Evaluator(object):
         if self._send_image_counter <= seq:
             self._send_image_counter += 1
 
-    def _send_image(self, name = None):
+    def _send_image(self, name=None):
+        if self._stop:
+            # stop timer
+            self._resend_timer.shutdown()
+            # write measurements to file
+            self._write_measurements_to_file()
+            # do nothing more
+            return
+
         if name is None:
             name = self._get_send_image_name()
         imgpath = os.path.join(self._image_path, name)
