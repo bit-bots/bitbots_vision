@@ -156,7 +156,8 @@ class Evaluator(object):
         if self._image_size is None:
             self._image_size = image.shape[:-1]
 
-        msg = self.bridge.cv2_to_imgmsg(image)
+        # building and sending message
+        msg = self.bridge.cv2_to_imgmsg(image, 'bgr8')
         msg.header.stamp = rospy.get_rostime()
         msg.header.seq = self._send_image_counter
         self._image_pub.publish(msg)
@@ -259,24 +260,24 @@ class Evaluator(object):
 
     def _measure_timing(self, header):
         # calculating the time the processing took
-        return rospy.get_rostime() - header.stamp
+        return (rospy.get_rostime() - header.stamp).to_sec()
 
     def _generate_polygon_mask_from_vectors(self, vectors):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
             cv2.fillConvexPoly(mask, vector, 1.0)
         return mask
 
     def _generate_rectangle_mask_from_vectors(self, vectors):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
             cv2.rectangle(mask, vector[0], vector[1], 1.0, thickness=-1)
         return mask
 
     def _generate_circle_mask_from_vectors(self, vectors):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
             center = (vector[0][0] + (vector[1][0] - vector[0][0]) / 2, vector[0][1] + (vector[1][1] - vector[0][1]) / 2)
@@ -285,13 +286,13 @@ class Evaluator(object):
         return mask
 
     def _generate_line_mask_from_vectors(self, vectors):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
         for vector in vectors:
-            cv2.line(mask, vector[0], vector[1], 1.0, thickness=self._line_thickness)
+            cv2.line(mask, tuple(vector[0]), tuple(vector[1]), 1.0, thickness=self._line_thickness)
         return mask
 
     def _generate_ball_mask_from_msg(self, msg):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
         for ball in msg.candidates:
             cv2.circle(mask, (int(round(ball.center.x)), int(round(ball.center.y))), int(round(ball.diameter/2)), 1.0, thickness=-1)
         return mask
@@ -304,7 +305,7 @@ class Evaluator(object):
         return self._generate_rectangle_mask_from_vectors(vectors)
 
     def _generate_line_mask_from_msg(self, msg):
-        mask = np.zeros(self._image_size)
+        mask = np.zeros(self._image_size, dtype=np.uint8)
         for line in msg.segments:
             cv2.line(mask, (int(round(line.start.x)), int(round(line.start.y))), (int(round(line.end.x)), int(round(line.end.y))), 1.0, thickness=self._line_thickness)
         return mask
@@ -314,13 +315,13 @@ class Evaluator(object):
         # WARNING: the mask has to be filled with 0 and 1 es
         # matches the masks onto each other to determine multiple measurements.
         rates = dict()
-        rates['tp'] = np.mean((np.bitwise_and(label_mask, detected_mask)))
-        rates['tn'] = np.mean(np.bitwise_not(np.bitwise_or(label_mask, detected_mask)))
-        rates['fp'] = np.mean(np.bitwise_and(detected_mask, np.bitwise_not(label_mask)))
-        rates['fn'] = np.mean(np.bitwise_and(np.bitwise_not(detected_mask), label_mask))
-        rates['lp'] = np.mean(label_mask)
+        rates['tp'] = float(np.mean((np.bitwise_and(label_mask, detected_mask))))
+        rates['tn'] = float(np.mean(np.bitwise_not(np.bitwise_or(label_mask, detected_mask))))
+        rates['fp'] = float(np.mean(np.bitwise_and(detected_mask, np.bitwise_not(label_mask))))
+        rates['fn'] = float(np.mean(np.bitwise_and(np.bitwise_not(detected_mask), label_mask)))
+        rates['lp'] = float(np.mean(label_mask))
         rates['ln'] = 1 - rates['lp']  # because all the other pixels have to be negative
-        rates['dp'] = np.mean(detected_mask)
+        rates['dp'] = float(np.mean(detected_mask))
         rates['dn'] = 1 - rates['dp']  # because all the other pixels have to be negative
         return rates
 
@@ -387,11 +388,12 @@ class Evaluator(object):
         return filtered_images
 
     def _write_measurements_to_file(self):
-        serialized_measurements = [measurement.serialize() for measurement in self._measurements]
+        serialized_measurements = [measurement.serialize() for measurement in self._measurements.values()]
         rospy.loginfo('Writing {} measurements to file...'.format(len(serialized_measurements)))
         filepath = 'data.yaml'  # TODO: this properly
         with open(filepath, 'w') as outfile:
             yaml.dump(serialized_measurements, outfile)  # , default_flow_style=False)
+        rospy.loginfo('Done writing to file.')
 
 
 if __name__ == "__main__":
