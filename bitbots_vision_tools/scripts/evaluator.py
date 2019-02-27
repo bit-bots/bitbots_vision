@@ -54,7 +54,7 @@ class Evaluator(object):
             self._evaluated_classes.append('ball')
             self._ball_sub = rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
                  BallsInImage,
-                 self._balls_callback(),
+                 self._balls_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
@@ -64,7 +64,7 @@ class Evaluator(object):
             self._evaluated_classes.append('line')
             self._line_sub = rospy.Subscriber(rospy.get_param("lines_topic", "lines_in_image"),
                  LineInformationInImage,
-                 self._lines_callback(),
+                 self._lines_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
@@ -76,7 +76,7 @@ class Evaluator(object):
             self._evaluated_classes.append('robot')
             self._line_sub = rospy.Subscriber(rospy.get_param("obstacles_topic", "obstacles_in_image"),
                  ObstaclesInImage,
-                 self._obstacles_callback(),
+                 self._obstacles_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
