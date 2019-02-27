@@ -357,6 +357,13 @@ class Evaluator(object):
 
 
 
+    def _write_measurements_to_file(self):
+        serialized_measurements = [measurement.serialize() for measurement in self._measurements]
+        rospy.loginfo('Writing {} measurements to file...'.format(len(serialized_measurements)))
+        filepath = 'data.yaml'  # TODO: this properly
+        with open(filepath, 'w') as outfile:
+            yaml.dump(serialized_measurements, outfile)  # , default_flow_style=False)
+
 
 if __name__ == "__main__":
     Evaluator()
