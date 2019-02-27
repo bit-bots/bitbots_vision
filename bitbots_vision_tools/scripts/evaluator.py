@@ -45,50 +45,50 @@ class Evaluator(object):
     def __init__(self):
         rospy.init_node("vision_evaluator")
 
-
         self._evaluated_classes = list()
 
         self._ball_sub = None
-        if rospy.get_param("listen_balls", False):
+        if rospy.get_param("bitbots_vision_evaluator/listen_balls", False):
             rospy.loginfo('listening for balls in image...')
             self._evaluated_classes.append('ball')
-            self._ball_sub = rospy.Subscriber(rospy.get_param("balls_topic", "balls_in_image"),
+            self._ball_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/balls_topic", "ball_in_image"),
                  BallsInImage,
                  self._balls_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
         self._line_sub = None
-        if rospy.get_param("listen_lines", False):
+        if rospy.get_param("bitbots_vision_evaluator/listen_lines", False):
             rospy.loginfo('listening for lines in image...')
             self._evaluated_classes.append('line')
-            self._line_sub = rospy.Subscriber(rospy.get_param("lines_topic", "lines_in_image"),
+            self._line_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/lines_topic", "lines_in_image"),
                  LineInformationInImage,
                  self._lines_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
         self._obstacle_sub = None
-        if rospy.get_param("listen_obstacle", False):
+        if rospy.get_param("bitbots_vision_evaluator/listen_obstacle", False):
             rospy.loginfo('listening for obstacles in image...')
             self._evaluated_classes.append('obstacle')
             self._evaluated_classes.append('goalpost')
             self._evaluated_classes.append('robot')
-            self._line_sub = rospy.Subscriber(rospy.get_param("obstacles_topic", "obstacles_in_image"),
+            self._line_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/obstacles_topic", "obstacles_in_image"),
                  ObstaclesInImage,
                  self._obstacles_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
         self._image_pub = rospy.Publisher('image_raw', Image, queue_size=1)
+        
+        self._loop_images = rospy.get_param("bitbots_vision_evaluator/loop_images", False)
 
-        self._image_path = '~/images'
+        self._image_path = rospy.get_param("bitbots_vision_evaluator/folder_path")
 
         self._line_thickness = 3
 
-
         # read label YAML file
-        self._label_filename = rospy.get_param('label_file_name')
+        self._label_filename = rospy.get_param('bitbots_vision_evaluator/label_file_name')
         rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
         self._images = self._read_labels(self._label_filename)
         rospy.loginfo('Done reading label-file.')
