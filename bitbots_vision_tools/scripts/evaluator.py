@@ -83,7 +83,10 @@ class Evaluator(object):
         self._label_filename = rospy.get_param('label_file_name')
         rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
         self._images = self._read_labels(self._label_filename)
-        rospy.loginfo('Done reading label-file.'.format(self._label_filename))
+        rospy.loginfo('Done reading label-file.')
+        rospy.loginfo('Validating labels of {} images...'.format(len(self._images)))
+        self._images = self._analyze_labels(self._images)
+        rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
 
         # initialize resend timer
         self._resend_timer = rospy.Timer(rospy.Duration(2), self._resend_callback) # 2 second timer TODO: make this a variable
@@ -315,17 +318,16 @@ class Evaluator(object):
             return [annotation['vector'] for annotation in annotations if annotation['type'] == typename]
         return [annotation['vector'] for annotation in annotations]
 
-        # returns the annotations of type TYPE
-
-    def _analyze_labels(self):
+    def _analyze_labels(self, images):
         # analyzes the label file for stuff
 
         not_in_image_count = dict()
         for eval_class in self._evaluated_classes:
             not_in_image_count[eval_class] = 0
 
-        remove_list = list()  # image names of images which need to be removed
-        for image in self._images:
+        filtered_images = list()
+        for image in images:
+            add_image = True  # whether the image is used in the evaluation or not
             in_image = dict()
             found_label = dict()
             for eval_class in self._evaluated_classes:
@@ -333,6 +335,7 @@ class Evaluator(object):
                 in_image[eval_class] = None
 
             for annotation in image['annotations']:
+                # determine whether the class is evaluated or not
                 if annotation['type'] not in self._evaluated_classes:
                     continue  # ignore other classes annotations
                 # annotation type is in evaluated classes
@@ -340,12 +343,12 @@ class Evaluator(object):
                 if in_image[annotation['type']] == True:
                     if not annotation['in']:  # contradiction!
                         rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
-                        remove_list.append(image['name'])
+                        add_image = False
                         break
                 elif in_image[annotation['type']]  == False:
                     if annotation['in']:  # contradiction!
                         rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
-                        remove_list.append(image['name'])
+                        add_image = False
                         break
                 else:  # it is None and therefor not set yet
                     in_image[annotation['type']] = annotation['in']
@@ -354,8 +357,9 @@ class Evaluator(object):
             for eval_class in self._evaluated_classes:
                 if not found_label[eval_class]:
                     not_in_image_count[eval_class] += 1
-
-
+            if add_image:
+                filtered_images.append(image)
+        return filtered_images
 
     def _write_measurements_to_file(self):
         serialized_measurements = [measurement.serialize() for measurement in self._measurements]
