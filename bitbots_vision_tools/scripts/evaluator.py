@@ -110,18 +110,17 @@ class Evaluator(object):
 
         # Stop-Stuff
         self._stop = False  # stop flag to handle kills
-        signal.signal(signal.SIGINT, self._kill_callback())
-        signal.signal(signal.SIGTERM, self._kill_callback())
+        signal.signal(signal.SIGINT, self._kill_callback)
+        signal.signal(signal.SIGTERM, self._kill_callback)
 
         rospy.spin()
 
-    def _kill_callback(self):
+    def _kill_callback(self, a, b):
         # the rest of the process is handled in the send_image method
         self._stop = True
 
     def _resend_callback(self, event):
         self._send_image(self._get_send_image_name())
-        pass
 
     def _get_send_image_name(self):
         return self._images[self._send_image_counter]['name']
