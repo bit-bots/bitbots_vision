@@ -352,8 +352,9 @@ class Evaluator(object):
 
     @staticmethod
     def _match_masks(label_mask, detected_mask):
-        # WARNING: the mask has to be filled with 0 and 1 es
         # matches the masks onto each other to determine multiple measurements.
+        label_mask = label_mask.astype(bool)
+        detected_mask = detected_mask.astype(bool)
         rates = dict()
         rates['tp'] = float(np.mean((np.bitwise_and(label_mask, detected_mask))))
         rates['tn'] = float(np.mean(np.bitwise_not(np.bitwise_or(label_mask, detected_mask))))
