@@ -8,7 +8,9 @@ from cv_bridge import CvBridge
 import cv2
 import yaml
 import os
+import sys
 import signal
+import time
 
 
 class Evaluation(object):
@@ -79,7 +81,7 @@ class Evaluator(object):
                  queue_size=1,
                  tcp_nodelay=True)
 
-        self._image_pub = rospy.Publisher('image_raw', Image, queue_size=1)
+        self._image_pub = rospy.Publisher('image_raw', Image, queue_size=1, latch=True)
         
         self._loop_images = rospy.get_param("bitbots_vision_evaluator/loop_images", False)
 
@@ -97,7 +99,8 @@ class Evaluator(object):
         rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
 
         # initialize resend timer
-        self._resend_timer = rospy.Timer(rospy.Duration(2), self._resend_callback) # 2 second timer TODO: make this a variable
+        # self._resend_timer = rospy.Timer(rospy.Duration.from_sec(.3), self._resend_callback, oneshot=True)  # 2 second timer TODO: make this a variable
+        self._react_timer = rospy.Timer(rospy.Duration.from_sec(.2), self._react_callback)  # 2 second timer TODO: make this a variable
 
         self.bridge = CvBridge()
 
@@ -107,11 +110,14 @@ class Evaluator(object):
         self._image_size = None  # tuple (height, width)
 
         self._measurements = dict()
+        self._measured_classes = set()
 
         # Stop-Stuff
         self._stop = False  # stop flag to handle kills
         signal.signal(signal.SIGINT, self._kill_callback)
         signal.signal(signal.SIGTERM, self._kill_callback)
+        self._lock = 0
+        self._send_image()
 
         rospy.spin()
 
@@ -120,7 +126,11 @@ class Evaluator(object):
         self._stop = True
 
     def _resend_callback(self, event):
-        self._send_image(self._get_send_image_name())
+        self._send_image()
+
+    def _react_callback(self, event):
+        if len(self._measured_classes) == len(self._evaluated_classes) and not self._lock:
+            self._send_image()
 
     def _get_send_image_name(self):
         return self._images[self._send_image_counter]['name']
@@ -136,13 +146,24 @@ class Evaluator(object):
             self._send_image_counter += 1
 
     def _send_image(self, name=None):
+        while self._lock:
+            # print('waiting...')
+            time.sleep(.05)
+        # handle stop at end of image list
+        if self._send_image_counter >= self._image_count:  # iterated through all images
+            rospy.loginfo('iterated through all images.')
+            self._stop = True
+        # executing any kind of stop
         if self._stop:
+            rospy.loginfo('Stopping the evaluator.')
             # stop timer
-            self._resend_timer.shutdown()
+            # self._resend_timer.shutdown()
             # write measurements to file
             self._write_measurements_to_file()
-            # do nothing more
-            return
+            # stop the spinner
+            rospy.signal_shutdown('killed.')
+            sys.exit(0)
+            return  # this is just to show that nothing happens after this
 
         if name is None:
             name = self._get_send_image_name()
@@ -165,9 +186,11 @@ class Evaluator(object):
 
         # set up evaluation element in measurements list
         self._measurements[self._send_image_counter] = ImageMeasurement(self._images[self._send_image_counter], self._evaluated_classes)
+        # self._resend_timer = rospy.Timer(rospy.Duration.from_sec(.3), self._resend_callback, oneshot=True)
 
     def _read_labels(self, filename):
         # reads the labels YAML file and returns a list of image names with their labels
+        # this is set up to work with the "evaluation" export format of the Bit-Bots Team in the ImageTagger.
         filepath = os.path.join(self._image_path, filename)
         images = None
         with open(filepath, 'r') as stream:
@@ -184,6 +207,9 @@ class Evaluator(object):
         return self._measurements[image_sequence]
 
     def _balls_callback(self, msg):
+        if 'ball' not in self._evaluated_classes:
+            return
+        self._lock += 1
         measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['ball']
         # mark as received
         measurement.received_message = True
@@ -198,10 +224,14 @@ class Evaluator(object):
                 )),
             self._generate_ball_mask_from_msg(msg))
 
-        if self._recieved_all_messages_for_image(msg.header.seq):
-            self._send_image()
+        self._update_image_counter(int(msg.header.frame_id))
+        self._lock -= 1
+        self._measured_classes.add('ball')
 
     def _obstacles_callback(self, msg):
+        if 'obstacle' not in self._evaluated_classes:
+            return
+        self._lock += 1
         # getting the measurement which is set here
         measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['obstacle']
         # mark as received
@@ -217,10 +247,14 @@ class Evaluator(object):
                 )),
             self._generate_obstacle_mask_from_msg(msg))
 
-        if self._recieved_all_messages_for_image(msg.header.seq):
-            self._send_image()
+        self._update_image_counter(int(msg.header.frame_id))
+        self._lock -= 1
+        self._measured_classes.add('obstacle')
 
     def _goalpost_callback(self, msg):
+        if 'goalpost' not in self._evaluated_classes:
+            return
+        self._lock += 1
         # getting the measurement which is set here
         measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['goalpost']
         # mark as received
@@ -236,10 +270,14 @@ class Evaluator(object):
                 )),
             self._generate_obstacle_mask_from_msg(msg))
 
-        if self._recieved_all_messages_for_image(msg.header.seq):
-            self._send_image()
+        self._update_image_counter(int(msg.header.frame_id))
+        self._lock -= 1
+        self._measured_classes.add('goalpost')
 
     def _lines_callback(self, msg):
+        if 'line' not in self._evaluated_classes:
+            return
+        self._lock += 1
         # getting the measurement which is set here
         measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['line']
         # mark as received
@@ -255,8 +293,9 @@ class Evaluator(object):
                 )),
             self._generate_line_mask_from_msg(msg))
 
-        if self._recieved_all_messages_for_image(msg.header.seq):
-            self._send_image()
+        self._update_image_counter(int(msg.header.frame_id))
+        self._lock -= 1
+        self._measured_classes.add('line')
 
     def _measure_timing(self, header):
         # calculating the time the processing took
@@ -326,6 +365,9 @@ class Evaluator(object):
         return rates
 
     def _recieved_all_messages_for_image(self, image_seq):
+        while self._lock:
+            # print('waiting...')
+            time.sleep(.05)
         measurement = self._measurements[image_seq]
         for eval_class in self._evaluated_classes:
             if not measurement.evaluations[eval_class].received_message:
@@ -395,7 +437,6 @@ class Evaluator(object):
         with open(filepath, 'w') as outfile:
             yaml.dump(serialized_measurements, outfile)  # , default_flow_style=False)
         rospy.loginfo('Done writing to file.')
-
 
 if __name__ == "__main__":
     Evaluator()
