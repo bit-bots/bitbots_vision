@@ -89,6 +89,19 @@ class Evaluator(object):
 
         self._line_thickness = 3
 
+        # initialize resend timer
+        # self._resend_timer = rospy.Timer(rospy.Duration.from_sec(.3), self._resend_callback, oneshot=True)  # 2 second timer TODO: make this a variable
+        self._react_timer = rospy.Timer(rospy.Duration.from_sec(.2), self._react_callback)  # 2 second timer TODO: make this a variable
+
+        self.bridge = CvBridge()
+        self._measurements = dict()
+        self._measured_classes = set()
+
+        # Stop-Stuff
+        self._stop = False  # stop flag to handle kills
+        signal.signal(signal.SIGINT, self._kill_callback)
+        signal.signal(signal.SIGTERM, self._kill_callback)
+
         # read label YAML file
         self._label_filename = rospy.get_param('bitbots_vision_evaluator/label_file_name')
         rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
@@ -98,24 +111,12 @@ class Evaluator(object):
         self._images = self._analyze_labels(self._images)
         rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
 
-        # initialize resend timer
-        # self._resend_timer = rospy.Timer(rospy.Duration.from_sec(.3), self._resend_callback, oneshot=True)  # 2 second timer TODO: make this a variable
-        self._react_timer = rospy.Timer(rospy.Duration.from_sec(.2), self._react_callback)  # 2 second timer TODO: make this a variable
-
-        self.bridge = CvBridge()
-
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
         self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
         self._image_count = len(self._images)  # number of images (important for loop stuff)
         self._image_size = None  # tuple (height, width)
 
-        self._measurements = dict()
-        self._measured_classes = set()
 
-        # Stop-Stuff
-        self._stop = False  # stop flag to handle kills
-        signal.signal(signal.SIGINT, self._kill_callback)
-        signal.signal(signal.SIGTERM, self._kill_callback)
         self._lock = 0
         self._send_image()
 
