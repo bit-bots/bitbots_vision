@@ -383,6 +383,7 @@ class Evaluator(object):
             for eval_class in self._evaluated_classes:
                 if not found_label[eval_class]:
                     not_in_image_count[eval_class] += 1
+                    add_image = False  # remove images when not all labels are defined somehow.
             if add_image:
                 filtered_images.append(image)
         return filtered_images
