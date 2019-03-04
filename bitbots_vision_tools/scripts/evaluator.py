@@ -110,6 +110,13 @@ class Evaluator(object):
         rospy.loginfo('Validating labels of {} images...'.format(len(self._images)))
         self._images = self._analyze_labels(self._images)
         rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
+        rospy.loginfo('Filling horizon vectors...')
+        for image in self._images:
+            for label in image['annotations']:
+                if label['type'] == 'horizon':
+                    label['vector'] = self._fill_horizon_vector(label['vector'])
+        rospy.loginfo('Done filling horizon vectors.')
+
 
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
         self._current_image_counter = 0  # represents the current image index in the list defined by the label yaml file
@@ -298,6 +305,29 @@ class Evaluator(object):
         self._lock -= 1
         self._measured_classes.add('line')
 
+    def _horizon_callback(self, msg):
+        if 'horizon' not in self._evaluated_classes:
+            return
+        self._lock += 1
+        # getting the measurement which is set here
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['horizon']
+        # mark as received
+        measurement.received_message = True
+        # measure duration of processing
+        measurement.duration = self._measure_timing(msg.header)
+        # generating and matching masks
+        measurement.pixel_mask_rates = self._match_masks(
+            self._generate_horizon_mask_from_vector(
+                Evaluator._extract_vectors_from_annotations(
+                    self._images[int(msg.header.frame_id)]['annotations'],
+                    typename='horizon'
+                )),
+            self._generate_obstacle_mask_from_msg(msg))
+
+        self._update_image_counter(int(msg.header.frame_id))
+        self._lock -= 1
+        self._measured_classes.add('horizon')
+
     def _measure_timing(self, header):
         # calculating the time the processing took
         return (rospy.get_rostime() - header.stamp).to_sec()
@@ -307,6 +337,12 @@ class Evaluator(object):
 
         for vector in vectors:
             cv2.fillConvexPoly(mask, vector, 1.0)
+        return mask
+
+    def _generate_horizon_mask_from_vector(self, vector):
+        mask = np.zeros(self._image_size, dtype=np.uint8)
+        points = vector + [(self._image_size[1] - 1, self._image_size[0] - 0), (0, self._image_size[0] - 1)]  # extending the points to fill the space below the horizon
+        cv2.fillPoly(mask, points, 1.0)
         return mask
 
     def _generate_rectangle_mask_from_vectors(self, vectors):
@@ -335,6 +371,13 @@ class Evaluator(object):
         mask = np.zeros(self._image_size, dtype=np.uint8)
         for ball in msg.candidates:
             cv2.circle(mask, (int(round(ball.center.x)), int(round(ball.center.y))), int(round(ball.diameter/2)), 1.0, thickness=-1)
+        return mask
+
+    def _generate_horizon_mask_from_msg(self, msg):
+        mask = np.zeros(self._image_size, dtype=np.uint8)
+        points = [(int(point.x), int(point.y)) for point in msg.points]
+        points = points + [(self._image_size[1] - 1, self._image_size[0] - 0), (0, self._image_size[0] - 1)]  # extending the points to fill the space below the horizon
+        cv2.fillPoly(mask, points, 1.0)
         return mask
 
     def _generate_obstacle_mask_from_msg(self, msg):
@@ -431,6 +474,23 @@ class Evaluator(object):
             if add_image:
                 filtered_images.append(image)
         return filtered_images
+
+    def _fill_horizon_vector(self, vector):
+        # extend the borders of the horizon to the borders of the image
+        if len(vector) < 2:
+            rospy.logwarn('found horizon label shorter than 2 elements')
+            return
+        begin = vector[0]
+        new_begin = vector[0]
+        end = vector[-1]
+        new_end = vector[-1]
+        if -10 < begin[0] < 10:
+            new_begin = (0, begin[1])
+        if self._image_size[1]-10 < end[0] < self._image_size[1]+10:
+            new_end = (self._image_size[1] - 1, begin[1])
+        vector[0] = new_begin
+        vector[-1] = new_end
+        return vector
 
     def _write_measurements_to_file(self):
         serialized_measurements = [measurement.serialize() for measurement in self._measurements.values()]
