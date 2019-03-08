@@ -3,8 +3,9 @@
 
 from bitbots_vision.vision_modules import lines, horizon, color, debug, live_classifier, classifier, ball, \
     lines2, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator
-from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationInImage, LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest
+from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationInImage, LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, HorizonInImage
 from sensor_msgs.msg import Image
+from geometry_msgs.msg import Point
 from cv_bridge import CvBridge
 import rospy
 import rospkg
@@ -128,7 +129,7 @@ class Vision:
         self.pub_obstacle.publish(obstacles_msg)
 
         # create line msg
-        line_msg = LineInformationInImage()  # Todo: add lines
+        line_msg = LineInformationInImage()
         line_msg.header.frame_id = image_msg.header.frame_id
         line_msg.header.stamp = image_msg.header.stamp
         for lp in self.line_detector.get_linepoints():
@@ -138,6 +139,12 @@ class Vision:
             ls.end = ls.start
             line_msg.segments.append(ls)
         self.pub_lines.publish(line_msg)
+
+        horizon_msg = HorizonInImage()
+        horizon_msg.header = image_msg.header
+        for point in self.horizon_detector.get_horizon_points():
+            horizon_msg.points.append(Point(point[0], point[1], 0))
+
 
         if self.ball_fcnn_publish_output and self.config['vision_ball_classifier'] == 'fcnn':
             fcnn_image_msg = self.ball_detector.get_cropped_msg()
