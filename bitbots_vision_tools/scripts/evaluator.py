@@ -21,6 +21,7 @@ class Evaluation(object):
         self.duration = None
 
 
+
 class ImageMeasurement(object):
     def __init__(self, image_data, eval_classes):
         self.evaluations = dict()
@@ -173,14 +174,18 @@ class Evaluator(object):
             sys.exit(0)
             return  # this is just to show that nothing happens after this
 
+        # handling unknown image name
         if name is None:
             name = self._get_send_image_name()
+
+        # reading image file
         imgpath = os.path.join(self._image_path, name)
         image = cv2.imread(imgpath)
         if image is None:
             rospy.logwarn('Could not open image {} at path {}'.format(name, self._image_path))
             return
 
+        # setting image size in the first run
         if self._image_size is None:
             self._image_size = image.shape[:-1]
 
