@@ -7,10 +7,10 @@
     <arg name="listen_balls" doc="listen for ball messages" default="true" />
     <arg name="listen_lines" doc="listen for line messages" default="true" />
     <arg name="listen_obstacles" doc="listen for obstacle messages" default="true" />
-    <arg name="listen_goalposts" doc="listen for gialpost messages (not working)" default="false" />
+    <arg name="listen_goalposts" doc="listen for goalpost messages (not working)" default="false" />
 
-    <node pkg="vision_tools" type="evaluator.py" name="bitbots_vision_evaluator" output="screen" >
-        <rosparam command="load" file="$(find vision_tools)/config/evaluator_params.yaml" />
+    <node pkg="bitbots_vision_tools" type="evaluator.py" name="bitbots_vision_evaluator" output="screen" >
+        <rosparam command="load" file="$(find bitbots_vision_tools)/config/evaluator_params.yaml" />
         <param name="folder_path" value="$(arg folder_path)" />
         <param name="label_file_name" value="$(arg label_file_name)" />
         <param name="output_file_path" value="$(arg output_file_path)" />
