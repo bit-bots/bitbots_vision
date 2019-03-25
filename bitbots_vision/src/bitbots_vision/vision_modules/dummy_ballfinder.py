@@ -10,8 +10,14 @@ class DummyClassifier(CandidateFinder):
     def set_image(self, image):
         pass
 
+    def compute_top_candidate(self):
+        pass
+
     def get_candidates(self):
         return self._classified_candidates
+
+    def compute_top_candidate(self):
+        pass
 
     def get_top_candidates(self, count=1):
         return self._sorted_candidates

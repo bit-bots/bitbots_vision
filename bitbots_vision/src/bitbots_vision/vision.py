@@ -1,45 +1,77 @@
 #! /usr/bin/env python2
 
-
-from bitbots_vision.vision_modules import lines, horizon, color, debug, live_classifier, classifier, ball, \
-    lines2, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator
-from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationInImage, LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, HorizonInImage
-from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point
-from cv_bridge import CvBridge
+import os
+import cv2
+import yaml
 import rospy
 import rospkg
-import cv2
-import os
 import threading
+from cv_bridge import CvBridge
 from dynamic_reconfigure.server import Server
+from sensor_msgs.msg import Image
+from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationInImage, \
+    LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, HorizonInImage
+from bitbots_vision.vision_modules import lines, horizon, color, debug, live_classifier, \
+    classifier, ball, lines2, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator
 from bitbots_vision.cfg import VisionConfig
-
+from bitbots_msgs.msg import Config
 
 class Vision:
-
     def __init__(self):
+        # type () -> None
+        """
+        Vision is the main ROS-node for handling all tasks related to image processing.
+        Initiating 'bitbots_vision' node.
+
+        :return: None
+        """
         rospack = rospkg.RosPack()
         self.package_path = rospack.get_path('bitbots_vision')
-
-        self.bridge = CvBridge()
 
         rospy.init_node('bitbots_vision')
         rospy.loginfo('Initializing vision...')
 
+        self.bridge = CvBridge()
+
         self.config = {}
+
         self.debug_image_dings = debug.DebugImage()  # Todo: better variable name
         if self.debug_image_dings:
             self.runtime_evaluator = evaluator.RuntimeEvaluator(None)
-        # register config callback and set config
-        srv = Server(VisionConfig, self._dynamic_reconfigure_callback)
+            
+        # Register publisher of 'vision_config'-messages
+        self.pub_config = rospy.Publisher(
+            'vision_config',
+            Config,
+            queue_size=1,
+            latch=True)
 
+        # Register VisionConfig server (dynamic reconfigure) and set callback
+        srv = Server(VisionConfig, self._dynamic_reconfigure_callback)
+        #rospy.loginfo("Vision startup")
         rospy.spin()
 
-    def _image_callback(self, img):
-        self.handle_image(img)
+    def _image_callback(self, image_msg):
+        # type: (Image) -> None
+        """
+        This method is called by the Image-message subscriber.
+        Old Image-messages were dropped.
+
+        Sometimes the queue gets to large, even when the size is limeted to 1. 
+        That's, why we drop old images manually.
+        """
+        #rospy.loginfo("image_callback")
+        # drops old images and cleans up queue
+        image_age = rospy.get_rostime() - image_msg.header.stamp 
+        if image_age.to_sec() > 0.1:
+            self.debug_printer.info('Vision: Dropped Image-message', 'image')
+            return
+
+        self.handle_image(image_msg)
 
     def handle_image(self, image_msg):
+        #rospy.loginfo("handle_image")
         # converting the ROS image message to CV2-image
         image = self.bridge.imgmsg_to_cv2(image_msg, 'bgr8')
 
@@ -52,11 +84,11 @@ class Vision:
 
         if (self.config['vision_ball_classifier'] == 'cascade'):
             self.ball_finder.set_image(image)
-            self.ball_detector.set_image(image,
-                                         self.horizon_detector.
-                                         balls_under_horizon(
-                                             self.ball_finder.get_ball_candidates(),
-                                             self._ball_candidate_y_offset))
+            self.ball_detector.set_image(
+                image,
+                self.horizon_detector.balls_under_horizon(
+                    self.ball_finder.get_ball_candidates(),
+                    self._ball_candidate_y_offset))
 
         elif (self.config['vision_ball_classifier'] == 'fcnn'):
             self.ball_detector.set_image(image)
@@ -203,7 +235,7 @@ class Vision:
         self.line_detector.compute_linepoints()
 
     def _dynamic_reconfigure_callback(self, config, level):
-
+        #rospy.loginfo("dynamic reconfigure callback")
         self.debug_printer = debug.DebugPrinter(
             debug_classes=debug.DebugPrinter.generate_debug_class_list_from_string(
                 config['vision_debug_printer_classes']))
@@ -229,38 +261,44 @@ class Vision:
             self.ball_detector = dummy_ballfinder.DummyClassifier(None, None, None)
         # color config
         self.white_color_detector = color.HsvSpaceColorDetector(
+            self.debug_printer,
             [config['white_color_detector_lower_values_h'], config['white_color_detector_lower_values_s'],
              config['white_color_detector_lower_values_v']],
             [config['white_color_detector_upper_values_h'], config['white_color_detector_upper_values_s'],
-             config['white_color_detector_upper_values_v']], self.debug_printer)
+             config['white_color_detector_upper_values_v']])
 
         self.red_color_detector = color.HsvSpaceColorDetector(
+            self.debug_printer,
             [config['red_color_detector_lower_values_h'], config['red_color_detector_lower_values_s'],
              config['red_color_detector_lower_values_v']],
             [config['red_color_detector_upper_values_h'], config['red_color_detector_upper_values_s'],
-             config['red_color_detector_upper_values_v']], self.debug_printer)
+             config['red_color_detector_upper_values_v']])
 
         self.blue_color_detector = color.HsvSpaceColorDetector(
+            self.debug_printer,
             [config['blue_color_detector_lower_values_h'], config['blue_color_detector_lower_values_s'],
              config['blue_color_detector_lower_values_v']],
             [config['blue_color_detector_upper_values_h'], config['blue_color_detector_upper_values_s'],
-             config['blue_color_detector_upper_values_v']], self.debug_printer)
+             config['blue_color_detector_upper_values_v']])
 
         self.field_color_detector = color.PixelListColorDetector(
-            self.package_path +
-            config['field_color_detector_path'],
-            self.debug_printer)
+            self.debug_printer,
+            self.package_path,
+            config,
+            primary_detector=True)
 
         self.horizon_detector = horizon.HorizonDetector(
             self.field_color_detector,
             config,
-            self.debug_printer)
+            self.debug_printer,
+            self.runtime_evaluator)
 
-        self.line_detector = lines.LineDetector(self.white_color_detector,
-                                                self.field_color_detector,
-                                                self.horizon_detector,
-                                                config,
-                                                self.debug_printer)
+        self.line_detector = lines.LineDetector(
+            self.white_color_detector,
+            self.field_color_detector,
+            self.horizon_detector,
+            config,
+            self.debug_printer)
 
         self.obstacle_detector = obstacle.ObstacleDetector(
             self.red_color_detector,
@@ -319,22 +357,24 @@ class Vision:
                     rospy.logerr('AAAAHHHH! The specified fcnn model file doesn\'t exist!')
                 self.ball_fcnn = live_fcnn_03.FCNN03(ball_fcnn_path, self.debug_printer)
                 rospy.logwarn(config['vision_ball_classifier'] + " vision is running now")
-            self.ball_detector = fcnn_handler.FcnnHandler(self.ball_fcnn,
-                                                          self.horizon_detector,
-                                                          self.ball_fcnn_config,
-                                                          self.debug_printer)
+            self.ball_detector = fcnn_handler.FcnnHandler(
+                self.ball_fcnn,
+                self.horizon_detector,
+                self.ball_fcnn_config,
+                self.debug_printer)
 
         # subscribers
         if 'ROS_img_msg_topic' not in self.config or \
                 self.config['ROS_img_msg_topic'] != config['ROS_img_msg_topic']:
             if hasattr(self, 'image_sub'):
                 self.image_sub.unregister()
-            self.image_sub = rospy.Subscriber(config['ROS_img_msg_topic'],
-                                              Image,
-                                              self._image_callback,
-                                              queue_size=config['ROS_img_queue_size'],
-                                              tcp_nodelay=True,
-                                              buff_size=60000000)
+            self.image_sub = rospy.Subscriber(
+                config['ROS_img_msg_topic'],
+                Image,
+                self._image_callback,
+                queue_size=config['ROS_img_queue_size'],
+                tcp_nodelay=True,
+                buff_size=60000000)
             # https://github.com/ros/ros_comm/issues/536
 
         # publishers
@@ -380,8 +420,12 @@ class Vision:
             queue_size=1,
         )
 
-        self.config = config
+        # Publish Config-message
+        msg = Config()
+        msg.data = yaml.dump(config)
+        self.pub_config.publish(msg)
 
+        self.config = config
         return config
 
 if __name__ == '__main__':
