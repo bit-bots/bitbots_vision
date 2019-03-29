@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 import rospy
-from humanoid_league_msgs.msg import LineInformationInImage, ObstaclesInImage, BallsInImage
+from humanoid_league_msgs.msg import LineInformationInImage, ObstaclesInImage, BallsInImage, HorizonInImage
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
 import numpy as np
@@ -80,6 +80,16 @@ class Evaluator(object):
             self._obstacle_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/obstacles_topic", "obstacles_in_image"),
                  ObstaclesInImage,
                  self._obstacles_callback,
+                 queue_size=1,
+                 tcp_nodelay=True)
+
+        self._horizon_sub = None
+        if rospy.get_param("bitbots_vision_evaluator/listen_horizon", False):
+            rospy.loginfo('listening for horizon in image...')
+            self._evaluated_classes.append('field edge')
+            self._horizon_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/horizon_topic", "horizon_in_image"),
+                 HorizonInImage,
+                 self._horizon_callback,
                  queue_size=1,
                  tcp_nodelay=True)
 
@@ -365,7 +375,12 @@ class Evaluator(object):
 
     def _generate_horizon_mask_from_vector(self, vector):
         mask = np.zeros(self._image_size, dtype=np.uint8)
-        points = vector + [(self._image_size[1] - 1, self._image_size[0] - 0), (0, self._image_size[0] - 1)]  # extending the points to fill the space below the horizon
+        vector = [list(pts) for pts in vector][0] #TODO wtf
+
+        vector.append([self._image_size[1] - 1, self._image_size[0] - 0])
+        vector.append([0, self._image_size[0] - 1])  # extending the points to fill the space below the horizon
+        points = np.array(vector, dtype=np.int32)
+        points = points.reshape((1, -1, 2))
         cv2.fillPoly(mask, points, 1.0)
         return mask
 
@@ -399,8 +414,10 @@ class Evaluator(object):
 
     def _generate_horizon_mask_from_msg(self, msg):
         mask = np.zeros(self._image_size, dtype=np.uint8)
-        points = [(int(point.x), int(point.y)) for point in msg.points]
+        points = [[int(point.x), int(point.y)] for point in msg.points]
         points = points + [(self._image_size[1] - 1, self._image_size[0] - 0), (0, self._image_size[0] - 1)]  # extending the points to fill the space below the horizon
+        points = np.array(points, dtype=np.int32)
+        points = points.reshape((1, -1, 2))
         cv2.fillPoly(mask, points, 1.0)
         return mask
 
