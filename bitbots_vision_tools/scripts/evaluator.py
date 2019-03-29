@@ -11,6 +11,7 @@ import os
 import sys
 import signal
 import time
+import pickle
 
 
 class Evaluation(object):
@@ -206,10 +207,26 @@ class Evaluator(object):
         # this is set up to work with the "evaluation" export format of the Bit-Bots Team in the ImageTagger.
         filepath = os.path.join(self._image_path, filename)
         images = None
-        with open(filepath, 'r') as stream:
+        if not os.path.isfile(filepath):
+            rospy.logerr('File at path \'{}\' not found!'.format(filepath))
+            return
+        pickle_filepath = filepath + '.pickle'
+        if not os.path.isfile(pickle_filepath):
+            rospy.loginfo('Creating pickle file from yaml...')
+            with open(filepath, 'r') as stream:
+                try:
+                    images = yaml.load(stream)['labels']
+                except yaml.YAMLError as exc:
+                    rospy.logerr(exc)
+            with open(pickle_filepath, 'wb') as f:
+                pickle.dump(images, f)
+            rospy.loginfo('Done.')
+        else:
+            rospy.loginfo('Reading pickle file...')
             try:
-                images = yaml.load(stream)['labels']
-            except yaml.YAMLError as exc:
+                with open(pickle_filepath, 'rb') as f:
+                    images = pickle.load(f)
+            except pickle.PickleError as exc:
                 rospy.logerr(exc)
         return images
 
