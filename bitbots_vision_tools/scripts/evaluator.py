@@ -330,11 +330,11 @@ class Evaluator(object):
         self._measured_classes.add('line')
 
     def _horizon_callback(self, msg):
-        if 'horizon' not in self._evaluated_classes:
+        if 'field edge' not in self._evaluated_classes:
             return
         self._lock += 1
         # getting the measurement which is set here
-        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['horizon']
+        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['field edge']
         # mark as received
         measurement.received_message = True
         # measure duration of processing
@@ -344,9 +344,9 @@ class Evaluator(object):
             self._generate_horizon_mask_from_vector(
                 Evaluator._extract_vectors_from_annotations(
                     self._images[int(msg.header.frame_id)]['annotations'],
-                    typename='horizon'
+                    typename='field edge'
                 )),
-            self._generate_obstacle_mask_from_msg(msg))
+            self._generate_horizon_mask_from_msg(msg))
 
         self._update_image_counter(int(msg.header.frame_id))
         self._lock -= 1
