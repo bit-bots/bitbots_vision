@@ -72,12 +72,12 @@ class Evaluator(object):
                  tcp_nodelay=True)
 
         self._obstacle_sub = None
-        if rospy.get_param("bitbots_vision_evaluator/listen_obstacle", False):
+        if rospy.get_param("bitbots_vision_evaluator/listen_obstacles", False):
             rospy.loginfo('listening for obstacles in image...')
+            self._evaluated_classes.append('robot_red')
+            self._evaluated_classes.append('robot_blue')
             self._evaluated_classes.append('obstacle')
-            self._evaluated_classes.append('goalpost')
-            self._evaluated_classes.append('robot')
-            self._line_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/obstacles_topic", "obstacles_in_image"),
+            self._obstacle_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/obstacles_topic", "obstacles_in_image"),
                  ObstaclesInImage,
                  self._obstacles_callback,
                  queue_size=1,
@@ -259,27 +259,29 @@ class Evaluator(object):
         self._measured_classes.add('ball')
 
     def _obstacles_callback(self, msg):
-        if 'obstacle' not in self._evaluated_classes:
-            return
-        self._lock += 1
-        # getting the measurement which is set here
-        measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations['obstacle']
-        # mark as received
-        measurement.received_message = True
-        # measure duration of processing
-        measurement.duration = self._measure_timing(msg.header)
-        # match masks
-        measurement.pixel_mask_rates = self._match_masks(
-            self._generate_rectangle_mask_from_vectors(
-                Evaluator._extract_vectors_from_annotations(
-                    self._images[int(msg.header.frame_id)]['annotations'],
-                    typename='obstacle'
-                )),
-            self._generate_obstacle_mask_from_msg(msg))
+        class_colors = [('obstacle', 1), ('robot_red', 2), ('robot_blue', 3)]
+        for class_color in class_colors:
+            if class_color[0] not in self._evaluated_classes:
+                continue
+            self._lock += 1
+            # getting the measurement which is set here
+            measurement = self._get_image_measurement(int(msg.header.frame_id)).evaluations[class_color[0]]
+            # mark as received
+            measurement.received_message = True
+            # measure duration of processing
+            measurement.duration = self._measure_timing(msg.header)
+            # match masks
+            measurement.pixel_mask_rates = self._match_masks(
+                self._generate_rectangle_mask_from_vectors(
+                    Evaluator._extract_vectors_from_annotations(
+                        self._images[int(msg.header.frame_id)]['annotations'],
+                        typename=class_color[0]
+                    )),
+                self._generate_obstacle_mask_from_msg(msg, color=class_color[1]))
 
-        self._update_image_counter(int(msg.header.frame_id))
-        self._lock -= 1
-        self._measured_classes.add('obstacle')
+            self._update_image_counter(int(msg.header.frame_id))
+            self._lock -= 1
+            self._measured_classes.add(class_color[0])
 
     def _goalpost_callback(self, msg):
         if 'goalpost' not in self._evaluated_classes:
@@ -475,6 +477,11 @@ class Evaluator(object):
                     continue  # ignore other classes annotations
                 # annotation type is in evaluated classes
                 found_label[annotation['type']] = True
+                # handle multi-class... classes.
+                if annotation['type'] == 'obstacle' or 'robot' in annotation['type']:
+                    found_label['obstacle'] = True
+                    found_label['robot_red'] = True
+                    found_label['robot_blue'] = True
                 if in_image[annotation['type']] == True:
                     if not annotation['in']:  # contradiction!
                         rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
@@ -521,6 +528,19 @@ class Evaluator(object):
         with open(filepath, 'w') as outfile:
             yaml.dump(serialized_measurements, outfile)  # , default_flow_style=False)
         rospy.loginfo('Done writing to file.')
+    def _classify_robots(self):
+        # special handling of robot classes
+        # this is an ugly workaround!!!
+        for image in self._images:
+            for annotation in image['annotations']:
+                if annotation['type'] == 'robot':
+                    if annotation['concealed']:
+                        annotation['type'] = 'robot_red'
+                    elif annotation['blurred']:
+                        annotation['type'] = 'robot_blue'
+                    else:
+                        annotation['type'] = 'obstacle'
+
 
 if __name__ == "__main__":
     Evaluator()
