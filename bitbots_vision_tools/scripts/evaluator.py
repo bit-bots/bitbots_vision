@@ -32,7 +32,7 @@ class ImageMeasurement(object):
 
     def serialize(self):
         return {
-            'evaluations': {eval_class: vars(self.evaluations[eval_class]) for eval_class in self.evaluations.keys()},
+            'evaluations': {eval_class: vars(self.evaluations[eval_class]) for eval_class in self.evaluations.keys() if self.evaluations[eval_class].received_message},
             'image_data': self.image_data
         }
 
@@ -47,8 +47,10 @@ class ImageMeasurement(object):
 
 class Evaluator(object):
     def __init__(self):
+        self._set_sim_time_param()
         rospy.init_node("vision_evaluator")
 
+        self._set_sim_time_param()
         self._evaluated_classes = list()
 
         self._ball_sub = None
@@ -110,10 +112,10 @@ class Evaluator(object):
         self._image_path = rospy.get_param("bitbots_vision_evaluator/folder_path")
 
         self._line_thickness = 3
+        self._set_sim_time_param()
 
         # initialize resend timer
         # self._resend_timer = rospy.Timer(rospy.Duration.from_sec(.3), self._resend_callback, oneshot=True)  # 2 second timer TODO: make this a variable
-        self._react_timer = rospy.Timer(rospy.Duration.from_sec(.2), self._react_callback)  # 2 second timer TODO: make this a variable
 
         self.bridge = CvBridge()
         self._measurements = dict()
@@ -129,6 +131,7 @@ class Evaluator(object):
         rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
         self._images = self._read_labels(self._label_filename)
         rospy.loginfo('Done reading label-file.')
+        self._classify_robots()  # to differ between robot colors based on blurred/concealed
         rospy.loginfo('Validating labels of {} images...'.format(len(self._images)))
         self._images = self._analyze_labels(self._images)
         rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
@@ -137,7 +140,9 @@ class Evaluator(object):
             for label in image['annotations']:
                 if label['type'] == 'horizon':
                     label['vector'] = self._fill_horizon_vector(label['vector'])
+        print(self._images)
         rospy.loginfo('Done filling horizon vectors.')
+        self._set_sim_time_param()
 
 
         self._send_image_counter = 0  # represents the image index of the image to be sent in the list defined by the label yaml file
@@ -145,10 +150,10 @@ class Evaluator(object):
         self._image_count = len(self._images)  # number of images (important for loop stuff)
         self._image_size = None  # tuple (height, width)
 
-
         self._lock = 0
         self._send_image()
-
+        self._set_sim_time_param()
+        self._react_timer = rospy.Timer(rospy.Duration.from_sec(.2), self._react_callback)  # 2 second timer TODO: make this a variable
         rospy.spin()
 
     def _kill_callback(self, a, b):
@@ -159,6 +164,11 @@ class Evaluator(object):
         self._send_image()
 
     def _react_callback(self, event):
+        print(self._lock)
+        print(self._measured_classes)
+        print(self._evaluated_classes)
+        if self._lock < 0:
+            self._lock = 0
         if len(self._measured_classes) == len(self._evaluated_classes) and not self._lock:
             self._send_image()
 
@@ -212,7 +222,7 @@ class Evaluator(object):
 
         # building and sending message
         msg = self.bridge.cv2_to_imgmsg(image, 'bgr8')
-        msg.header.stamp = rospy.get_rostime()
+        msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = str(self._send_image_counter)
         rospy.loginfo('sending image {} of {} (starting by 0).'.format(self._send_image_counter, self._image_count))
         self._image_pub.publish(msg)
@@ -250,6 +260,7 @@ class Evaluator(object):
                 rospy.logerr(exc)
         return images
 
+
     def _get_image_measurement(self, image_sequence):
         if image_sequence not in self._measurements.keys():
             rospy.logerr('got an unknown image with seq {}! Is there a ROS-bag running? Stop it please!'.format(image_sequence))
@@ -273,7 +284,6 @@ class Evaluator(object):
                     typename='ball'
                 )),
             self._generate_ball_mask_from_msg(msg))
-
         self._update_image_counter(int(msg.header.frame_id))
         self._lock -= 1
         self._measured_classes.add('ball')
@@ -380,7 +390,9 @@ class Evaluator(object):
         mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
-            cv2.fillConvexPoly(mask, vector, 1.0)
+            if not vector:
+                continue
+            cv2.fillConvexPoly(mask, np.array(vector), 1.0)
         return mask
 
     def _generate_horizon_mask_from_vector(self, vector):
@@ -398,13 +410,17 @@ class Evaluator(object):
         mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
-            cv2.rectangle(mask, vector[0], vector[1], 1.0, thickness=-1)
+            if not vector:
+                continue
+            cv2.rectangle(mask, tuple(vector[0]), tuple(vector[1]), 1.0, thickness=-1)
         return mask
 
     def _generate_circle_mask_from_vectors(self, vectors):
         mask = np.zeros(self._image_size, dtype=np.uint8)
 
         for vector in vectors:
+            if not vector:
+                continue
             center = (vector[0][0] + (vector[1][0] - vector[0][0]) / 2, vector[0][1] + (vector[1][1] - vector[0][1]) / 2)
             radius = ((vector[1][0] - vector[0][0]) / 2 + (vector[1][1] - vector[0][1]) / 2) / 2
             cv2.circle(mask, center, radius, 1.0, thickness=-1)
@@ -413,6 +429,8 @@ class Evaluator(object):
     def _generate_line_mask_from_vectors(self, vectors):
         mask = np.zeros(self._image_size, dtype=np.uint8)
         for vector in vectors:
+            if not vector:
+                continue
             cv2.line(mask, tuple(vector[0]), tuple(vector[1]), 1.0, thickness=self._line_thickness)
         return mask
 
@@ -484,7 +502,7 @@ class Evaluator(object):
     def _extract_vectors_from_annotations(annotations, typename=None):
         # returns the vectors of annotations of type TYPE
         if typename:
-            return [annotation['vector'] for annotation in annotations if annotation['type'] == typename]
+            return [annotation['vector'] for annotation in annotations if annotation['type'] == typename and annotation['in']]
         return [annotation['vector'] for annotation in annotations]
 
     def _analyze_labels(self, images):
@@ -580,6 +598,10 @@ class Evaluator(object):
                     else:
                         annotation['type'] = 'obstacle'
 
+    def _set_sim_time_param(self):
+        if rospy.get_param('/use_sim_time'):
+            print('setting /use_sim_time to false...')
+            rospy.set_param('/use_sim_time', False)
 
 if __name__ == "__main__":
     Evaluator()
