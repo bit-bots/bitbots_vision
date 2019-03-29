@@ -455,6 +455,10 @@ class Evaluator(object):
         rates['tn'] = float(np.mean(np.bitwise_not(np.bitwise_or(label_mask, detected_mask))))
         rates['fp'] = float(np.mean(np.bitwise_and(detected_mask, np.bitwise_not(label_mask))))
         rates['fn'] = float(np.mean(np.bitwise_and(np.bitwise_not(detected_mask), label_mask)))
+        # https://en.wikipedia.org/wiki/Jaccard_index
+        numerator = float(np.sum(np.bitwise_and(label_mask, detected_mask)))
+        denominator = float(np.sum(np.bitwise_or(label_mask, detected_mask)))
+        rates['iou'] = numerator / denominator if denominator > 0 else 1
         rates['lp'] = float(np.mean(label_mask))
         rates['ln'] = 1 - rates['lp']  # because all the other pixels have to be negative
         rates['dp'] = float(np.mean(detected_mask))
@@ -556,6 +560,13 @@ class Evaluator(object):
         with open(filepath, 'w') as outfile:
             yaml.dump(serialized_measurements, outfile)  # , default_flow_style=False)
         rospy.loginfo('Done writing to file.')
+        rospy.loginfo('Mean IoUs (by class):')
+        evaluations = [k['evaluations'] for k in serialized_measurements]
+        for iou_class in self._evaluated_classes:
+            class_evals = [ev[iou_class] for ev in evaluations if ev and iou_class in ev.keys()]
+            ious = [measurement['pixel_mask_rates']['iou'] for measurement in class_evals if measurement]
+            rospy.loginfo('{}: {}'.format(iou_class, sum(ious) / float(len(ious))))
+
     def _classify_robots(self):
         # special handling of robot classes
         # this is an ugly workaround!!!
