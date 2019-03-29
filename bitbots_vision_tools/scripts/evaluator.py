@@ -83,6 +83,16 @@ class Evaluator(object):
                  queue_size=1,
                  tcp_nodelay=True)
 
+        self._goalpost_sub = None
+        if rospy.get_param("bitbots_vision_evaluator/listen_goalposts", False):
+            rospy.loginfo('listening for goalposts in image...')
+            self._evaluated_classes.append('goalpost')
+            self._goalpost_sub = rospy.Subscriber(rospy.get_param("bitbots_vision_evaluator/goalpost_topic", "goalpost_in_image"),
+                 ObstaclesInImage,
+                 self._goalpost_callback,
+                 queue_size=1,
+                 tcp_nodelay=True)
+
         self._horizon_sub = None
         if rospy.get_param("bitbots_vision_evaluator/listen_horizon", False):
             rospy.loginfo('listening for horizon in image...')
@@ -421,11 +431,12 @@ class Evaluator(object):
         cv2.fillPoly(mask, points, 1.0)
         return mask
 
-    def _generate_obstacle_mask_from_msg(self, msg):
+    def _generate_obstacle_mask_from_msg(self, msg, color=-1):
         vectors = list()
         for obstacle in msg.obstacles:
-            vector = ((obstacle.top_left.x, obstacle.top_left.y), (obstacle.top_left.x + obstacle.width, obstacle.top_left.y + obstacle.height))
-            vectors.append(vector)
+            if color == -1 or obstacle.color == color:
+                vector = ((int(obstacle.top_left.x), int(obstacle.top_left.y)), (int(obstacle.top_left.x) + obstacle.width, int(obstacle.top_left.y) + obstacle.height))
+                vectors.append(vector)
         return self._generate_rectangle_mask_from_vectors(vectors)
 
     def _generate_line_mask_from_msg(self, msg):
