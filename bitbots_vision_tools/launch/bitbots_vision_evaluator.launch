@@ -7,7 +7,8 @@
     <arg name="listen_balls" doc="listen for ball messages" default="true" />
     <arg name="listen_lines" doc="listen for line messages" default="true" />
     <arg name="listen_obstacles" doc="listen for obstacle messages" default="true" />
-    <arg name="listen_goalposts" doc="listen for goalpost messages (not working)" default="false" />
+    <arg name="listen_goalposts" doc="listen for goalpost messages (not working)" default="true" />
+    <arg name="listen_horizon" doc="listen for horizon messages" default="true" />
 
     <node pkg="bitbots_vision_tools" type="evaluator.py" name="bitbots_vision_evaluator" output="screen" >
         <rosparam command="load" file="$(find bitbots_vision_tools)/config/evaluator_params.yaml" />
@@ -19,5 +20,6 @@
         <param name="listen_lines" value="$(arg listen_lines)" />
         <param name="listen_obstacles" value="$(arg listen_obstacles)" />
         <param name="listen_goalposts" value="$(arg listen_goalposts)" />
+        <param name="listen_horizon" value="$(arg listen_horizon)" />
     </node>
 </launch>

@@ -61,6 +61,7 @@ class Vision:
         Sometimes the queue gets to large, even when the size is limeted to 1. 
         That's, why we drop old images manually.
         """
+        self.handle_image(image_msg)
         #rospy.loginfo("image_callback")
         # drops old images and cleans up queue
         image_age = rospy.get_rostime() - image_msg.header.stamp 
@@ -129,6 +130,9 @@ class Vision:
         obstacles_msg = ObstaclesInImage()
         obstacles_msg.header.frame_id = image_msg.header.frame_id
         obstacles_msg.header.stamp = image_msg.header.stamp
+        goalposts_msg = ObstaclesInImage()
+        goalposts_msg.header.frame_id = image_msg.header.frame_id
+        goalposts_msg.header.stamp = image_msg.header.stamp
         for red_obs in self.obstacle_detector.get_red_obstacles():
             obstacle_msg = ObstacleInImage()
             obstacle_msg.color = ObstacleInImage.ROBOT_MAGENTA
@@ -149,6 +153,15 @@ class Vision:
             obstacle_msg.confidence = 1.0
             obstacle_msg.playerNumber = 42
             obstacles_msg.obstacles.append(obstacle_msg)
+        for white_obs in self.obstacle_detector.get_white_obstacles():
+            goalpost_msg = ObstacleInImage()
+            goalpost_msg.top_left.x = white_obs.get_upper_left_x()
+            goalpost_msg.top_left.y = white_obs.get_upper_left_y()
+            goalpost_msg.height = int(white_obs.get_height())
+            goalpost_msg.width = int(white_obs.get_width())
+            goalpost_msg.confidence = 1.0
+            goalpost_msg.playerNumber = 42
+            goalposts_msg.obstacles.append(goalpost_msg)
         for other_obs in self.obstacle_detector.get_other_obstacles():
             obstacle_msg = ObstacleInImage()
             obstacle_msg.color = ObstacleInImage.UNDEFINED
@@ -159,6 +172,7 @@ class Vision:
             obstacle_msg.confidence = 1.0
             obstacles_msg.obstacles.append(obstacle_msg)
         self.pub_obstacle.publish(obstacles_msg)
+        self.pub_goalpost.publish(goalposts_msg)
 
         # create line msg
         line_msg = LineInformationInImage()
@@ -172,10 +186,13 @@ class Vision:
             line_msg.segments.append(ls)
         self.pub_lines.publish(line_msg)
 
+
+
         horizon_msg = HorizonInImage()
         horizon_msg.header = image_msg.header
         for point in self.horizon_detector.get_horizon_points():
             horizon_msg.points.append(Point(point[0], point[1], 0))
+        self.pub_horizon.publish(horizon_msg)
 
 
         if self.ball_fcnn_publish_output and self.config['vision_ball_classifier'] == 'fcnn':
@@ -229,6 +246,8 @@ class Vision:
                 self.debug_image_dings.imshow()
             if self.debug_image_msg:
                 self.pub_debug_image.publish(self.bridge.cv2_to_imgmsg(self.debug_image_dings.get_image(), 'bgr8'))
+        # cv2.imshow('color Image', self.red_color_detector.mask_image(image))
+        # cv2.waitKey(1)
 
     def _conventional_precalculation(self):
         self.obstacle_detector.compute_all_obstacles()
@@ -385,6 +404,14 @@ class Vision:
             self.pub_balls = rospy.Publisher(
                 config['ROS_ball_msg_topic'],
                 BallsInImage,
+                queue_size=1)
+            self.pub_horizon = rospy.Publisher(
+                'horizon_in_image',
+                HorizonInImage,
+                queue_size=1)
+            self.pub_goalpost = rospy.Publisher(
+                'goalpost_in_image',
+                ObstaclesInImage,
                 queue_size=1)
 
         if 'ROS_line_msg_topic' not in self.config or \
