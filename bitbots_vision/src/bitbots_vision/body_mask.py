@@ -8,7 +8,7 @@ import tf2_ros as tf2
 from tf2_geometry_msgs import PointStamped
 
 
-class BodyMask(object):
+class BodyMaskObjectFinder(object):
     def __init__(self):
         rospy.init_node('body_mask')
         self.rate = 30
@@ -82,9 +82,6 @@ class BodyMask(object):
         scalar_y = self.vertical_fov/float(self.y_resolution)
         return int(math.degrees(angle[1]) * scalar_x), int(math.degrees(angle[0]) * scalar_y)
 
-
-    def publish(self):
-        pass
 
 if __name__ == "__main__":
     BodyMask().start()
