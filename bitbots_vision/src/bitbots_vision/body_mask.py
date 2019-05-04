@@ -10,9 +10,8 @@ from tf2_geometry_msgs import PointStamped
 
 class BodyMaskObjectFinder(object):
     def __init__(self):
-        rospy.init_node('body_mask')
         self.rate = 30
-        self.thickness_scalar = 20
+        self.thickness_scalar = 100
         self.vertical_fov = 90
         self.horizontal_fov = int(90 * 1.8)
         self.x_resolution = 640
@@ -58,7 +57,7 @@ class BodyMaskObjectFinder(object):
         return objects
 
     def distance_to_thickness(self, distance):
-        return int(distance * self.thickness_scalar)
+        return int(1/(distance+1) * self.thickness_scalar)
 
     def to_absolute(self, point):
         return int(point[0] + (self.x_resolution/2)), int(point[1] + (self.y_resolution/2))
@@ -84,4 +83,5 @@ class BodyMaskObjectFinder(object):
 
 
 if __name__ == "__main__":
-    BodyMask().start()
+    rospy.init_node('body_mask')
+    BodyMaskObjectFinder().start()
