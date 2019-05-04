@@ -102,7 +102,6 @@ class Vision:
         # TODO: handle all ball candidates
         top_ball_candidate = self.ball_detector.get_top_candidate()
 
-
         # check whether ball candidates are under the horizon
         # TODO: handle multiple ball candidates
         if top_ball_candidate:
@@ -113,6 +112,9 @@ class Vision:
                 top_ball_candidate = balls_under_horizon[0]
             else:
                 top_ball_candidate = None
+
+        # TODO check whether ball candidates are false positives of the own body (e.g. arms, foots, ...)
+        
 
         # check whether ball candidates are over rating threshold
         if top_ball_candidate and top_ball_candidate.rating > self._ball_candidate_threshold:
