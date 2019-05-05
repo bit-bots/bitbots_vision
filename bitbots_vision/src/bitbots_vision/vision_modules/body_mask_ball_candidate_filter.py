@@ -28,8 +28,11 @@ class BodyMaskBallCandidateFilter(object):
         self.max_intersection_threshold = config['vision_ball_own_body_max_intersection_threshold']
         self.finder = BodyMaskObjectFinder()
         # To accommodate termination issues
+        """
         while not rospy.is_shutdown():
             self.test()
+        """
+        rospy.spin()
 
     def get_body_parts(self):
         # type: () -> [(int, int), (int, int), int]
