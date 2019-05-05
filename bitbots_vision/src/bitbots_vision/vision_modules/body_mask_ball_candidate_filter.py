@@ -34,11 +34,12 @@ class BodyMaskBallCandidateFilter(object):
         """
         rospy.spin()
 
-    def get_body_parts(self):
+    def get_body_parts(self, image_size):
         # type: () -> [(int, int), (int, int), int]
         """
         TODO
         """
+        self.finder.set_resolution(image_size)
         return self.finder.work()
 
     def get_body_mask(self, body_parts, image_size):
@@ -77,7 +78,7 @@ class BodyMaskBallCandidateFilter(object):
         cv2.imshow("image", image)
         k = cv2.waitKey(1)
 
-    def ball_candidate_not_on_own_body(self, ball_candidate, body_mask):
+    def ball_candidate_not_on_own_body(self, ball_candidate, body_mask, image_size):
         # type: () -> bool
         """
         TODO
@@ -99,7 +100,7 @@ class BodyMaskBallCandidateFilter(object):
         """
         TODO
         """
-        body_parts = self.get_body_parts
+        body_parts = self.get_body_parts(image_size)
         body_mask = self.get_body_mask(body_parts, image_size)
         return [ball_candidate for ball_candidate in ball_candidates if self.ball_candidate_not_on_own_body(
             ball_candidate,
