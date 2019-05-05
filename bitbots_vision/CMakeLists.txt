@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   message_generation
   dynamic_reconfigure
+  tf2_ros
 )
 
 catkin_python_setup()
@@ -29,7 +30,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs humanoid_league_msgs image_transport message_runtime rospy python-rospkg sensor_msgs std_msgs
+  CATKIN_DEPENDS geometry_msgs humanoid_league_msgs image_transport message_runtime rospy python-rospkg sensor_msgs std_msgs tf2_ros
 )
 
 include_directories(

@@ -13,7 +13,7 @@ from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationI
     LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, GoalPartsInImage, PostInImage, \
     GoalInImage
 from bitbots_vision.vision_modules import lines, horizon, color, debug, live_classifier, \
-    classifier, ball, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator,
+    classifier, ball, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator, \
     body_mask_ball_candidate_filter
 from bitbots_vision.cfg import VisionConfig
 from bitbots_msgs.msg import Config
@@ -307,7 +307,7 @@ class Vision:
         if config['vision_ball_classifier'] == 'dummy':
             self.ball_detector = dummy_ballfinder.DummyClassifier(None, None, self.debug_printer)
         
-        self.body_mask_ball_candidate_filter = body_mask_ball_candidate_filter(
+        self.body_mask_ball_candidate_filter = body_mask_ball_candidate_filter.BodyMaskBallCandidateFilter(
             self.debug_printer,
             config)
 

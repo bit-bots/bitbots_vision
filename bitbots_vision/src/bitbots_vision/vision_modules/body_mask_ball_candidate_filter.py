@@ -10,22 +10,20 @@ from bitbots_vision.vision_modules import debug, ball, candidate
 import tf2_ros as tf2
 from tf2_geometry_msgs import PointStamped
 
-
-# TODO: docs
-# TODO: set resolution on transformer stuff
-# TODO: publish debug image as overlay of body mask with 0.5 opacity
-# TODO: rename calss to BallCandidateBodyMaskFilter
+    # TODO: docs
+    # TODO: set resolution on transformer stuff
+    # TODO: publish debug image as overlay of body mask with 0.5 opacity
+    # TODO: rename class to BallCandidateBodyMaskFilter
 
 class BodyMaskBallCandidateFilter(object):
     """
     TODO
     """
-    def __init__(self, debug_printer, image_size, config):
+    def __init__(self, debug_printer, config):
         # type: (DebugPrinter, (int, int), dict) -> None
         """
         TODO
         """
-        self.image_size = image_size
         self.max_intersection_threshold = config['vision_ball_own_body_max_intersection_threshold']
         self.finder = BodyMaskObjectFinder()
         # To accommodate termination issues
@@ -39,13 +37,13 @@ class BodyMaskBallCandidateFilter(object):
         """
         return self.finder.work()
 
-    def get_body_mask(self, body_parts):
+    def get_body_mask(self, body_parts, image_size):
         # type: ([(int, int), (int, int), int]) -> TODO
         """
         TODO
         """
         # Generate white canvas
-        mask = np.ones(self.image_size, dtype=np.uint8) * 255
+        mask = np.ones(image_size, dtype=np.uint8) * 255
         # Draw black lines for the parts of the own body
         for body_part in body_parts:
             cv2.line(mask, body_part[0], body_part[1], (0,0,0), thickness=body_part[2])
@@ -57,7 +55,7 @@ class BodyMaskBallCandidateFilter(object):
         objects = self.get_body_parts()
         self.imshow(self.get_body_mask(objects))
     
-    def get_ball_mask(self, ball_candidate):
+    def get_ball_mask(self, ball_candidate, image_size):
         # type: () -> TODO
         """
         TODO
@@ -65,7 +63,7 @@ class BodyMaskBallCandidateFilter(object):
         center = ball_candidate.get_center_point()
         radius = ball_candidate.get_radius()
         # Generates a black canvas
-        canvas = np.zeros(self.image_size, dtype=np.uint8)
+        canvas = np.zeros(image_size, dtype=np.uint8)
         # Draw white circle representing a ball
         mask = cv2.circle(canvas, center, radius, (255, 255, 255), thickness=-1)
         return mask
@@ -83,7 +81,7 @@ class BodyMaskBallCandidateFilter(object):
         # Area of ball candidate in number of pixels
         ball_area = math.pi * ball_candidate.get_radius() ** 2
 
-        ball_mask = self.get_ball_mask(ball_candidate)
+        ball_mask = self.get_ball_mask(ball_candidate, image_size)
 
         # Number of pixels intersecting both masks
         intersection_area = cv2.countNonZero(
@@ -92,13 +90,13 @@ class BodyMaskBallCandidateFilter(object):
         # True, if percentile of intersecting area 
         return (intersection_area / ball_area) <= self.max_intersection_threshold
 
-    def get_ball_candidates_not_on_own_body(self, ball_candidates):
+    def get_ball_candidates_not_on_own_body(self, ball_candidates, image_size):
         # type: (TODO) -> TODO
         """
         TODO
         """
         body_parts = self.get_body_parts
-        body_mask = self.get_body_mask(body_parts)
+        body_mask = self.get_body_mask(body_parts, image_size)
         return [ball_candidate for ball_candidate in ball_candidates if self.ball_candidate_not_on_own_body(
             ball_candidate,
             body_mask)]
@@ -184,5 +182,5 @@ class BodyMaskObjectFinder(object):
 
 
 if __name__ == "__main__":
-    rospy.init_node('body_mask')
+    # rospy.init_node('body_mask')
     body_mask_ball_candidate_filter((360, 640))
