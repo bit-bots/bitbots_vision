@@ -108,7 +108,7 @@ class body_mask_ball_candidate_filter(object):
 class BodyMaskObjectFinder(object):
     def __init__(self):
         self.rate = 30
-        self.thickness_scalar = 200
+        self.arm_width = 0.05
         self.vertical_fov = 70
         self.horizontal_fov = int(90 * 1.7)
         self.x_resolution = 640
@@ -157,7 +157,9 @@ class BodyMaskObjectFinder(object):
         return objects
 
     def distance_to_thickness(self, distance):
-        return int(1/((distance+1)**2) * self.thickness_scalar)
+        angle_at_camera = math.atan2(float(self.arm_width), float(distance))
+        thickness = self.image_position_from_angle((0,angle_at_camera))[0]
+        return thickness
 
     def to_absolute(self, point):
         return int(point[0] + (self.x_resolution/2)), int(point[1] + (self.y_resolution/2))
