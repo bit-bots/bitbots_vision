@@ -13,7 +13,8 @@ from humanoid_league_msgs.msg import BallInImage, BallsInImage, LineInformationI
     LineSegmentInImage, ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, GoalPartsInImage, PostInImage, \
     GoalInImage
 from bitbots_vision.vision_modules import lines, horizon, color, debug, live_classifier, \
-    classifier, ball, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator
+    classifier, ball, fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, evaluator,
+    body_mask_ball_candidate_filter
 from bitbots_vision.cfg import VisionConfig
 from bitbots_msgs.msg import Config
 
@@ -113,8 +114,19 @@ class Vision:
             else:
                 top_ball_candidate = None
 
-        # TODO check whether ball candidates are false positives of the own body (e.g. arms, foots, ...)
-        
+        # check whether ball candidates are false positives of the own body (e.g. arms, foots, ...)
+        # TODO: logwarn if active or not...
+        if self.config['vision_ball_body_mask_active']:
+            shape = np.shape(image)
+            image_size = (shape[0], shape[1])
+            if top_ball_candidate:
+                balls = []
+                balls.append(top_ball_candidate)
+                balls_not_on_own_body = self.body_mask_ball_candidate_filter.get_ball_candidates_not_on_own_body(balls, image_size)
+                if balls_not_on_own_body:
+                    top_ball_candidate = balls_not_on_own_body[0]
+                else:
+                    top_ball_candidate = None
 
         # check whether ball candidates are over rating threshold
         if top_ball_candidate and top_ball_candidate.rating > self._ball_candidate_threshold:
@@ -294,6 +306,10 @@ class Vision:
 
         if config['vision_ball_classifier'] == 'dummy':
             self.ball_detector = dummy_ballfinder.DummyClassifier(None, None, self.debug_printer)
+        
+        self.body_mask_ball_candidate_filter = body_mask_ball_candidate_filter(
+            self.debug_printer,
+            config)
 
         # Print status of color config
         if 'vision_use_sim_color' not in self.config or \

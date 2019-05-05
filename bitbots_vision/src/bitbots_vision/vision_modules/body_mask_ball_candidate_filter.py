@@ -14,25 +14,23 @@ from tf2_geometry_msgs import PointStamped
 # TODO: docs
 # TODO: set resolution on transformer stuff
 # TODO: publish debug image as overlay of body mask with 0.5 opacity
+# TODO: rename calss to BallCandidateBodyMaskFilter
 
-
-class body_mask_ball_candidate_filter(object):
+class BodyMaskBallCandidateFilter(object):
     """
     TODO
     """
-    def __init__(self, image_size):
-        # TODO: debug printer
+    def __init__(self, debug_printer, image_size, config):
         # type: (DebugPrinter, (int, int), dict) -> None
         """
         TODO
         """
         self.image_size = image_size
-        # TODO dyn reconf
-        self.max_intersection_threshold = 0.2
+        self.max_intersection_threshold = config['vision_ball_own_body_max_intersection_threshold']
         self.finder = BodyMaskObjectFinder()
+        # To accommodate termination issues
         while not rospy.is_shutdown():
             self.test()
-        
 
     def get_body_parts(self):
         # type: () -> [(int, int), (int, int), int]
@@ -54,6 +52,7 @@ class body_mask_ball_candidate_filter(object):
         self.imshow(mask)
         return mask
 
+    # TODO: remove
     def test(self):
         objects = self.get_body_parts()
         self.imshow(self.get_body_mask(objects))
@@ -71,6 +70,7 @@ class body_mask_ball_candidate_filter(object):
         mask = cv2.circle(canvas, center, radius, (255, 255, 255), thickness=-1)
         return mask
 
+    # TODO: remove
     def imshow(self, image):
         cv2.imshow("image", image)
         k = cv2.waitKey(1)
@@ -102,7 +102,6 @@ class body_mask_ball_candidate_filter(object):
         return [ball_candidate for ball_candidate in ball_candidates if self.ball_candidate_not_on_own_body(
             ball_candidate,
             body_mask)]
-
 
 
 class BodyMaskObjectFinder(object):
