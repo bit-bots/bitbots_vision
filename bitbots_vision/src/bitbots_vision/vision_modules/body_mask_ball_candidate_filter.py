@@ -6,9 +6,10 @@ import math
 import numpy as np
 import cv2
 from bitbots_vision.vision_modules import debug, ball, candidate
-
+from sensor_msgs.msg import CameraInfo
 import tf2_ros as tf2
 from tf2_geometry_msgs import PointStamped
+from geometry_msgs.msg import Point
 
     # TODO: docs
     # TODO: set resolution on transformer stuff
@@ -107,13 +108,35 @@ class BodyMaskObjectFinder(object):
         self.rate = 30
         self.arm_width = 0.05
         self.vertical_fov = 70
-        self.horizontal_fov = int(90 * 1.7)
+        self.horizontal_fov = int(70 * 1.7)
         self.x_resolution = 640
         self.y_resolution = 360
         self.frame = 'camera_optical_frame'
+        self.camera_info = None
         self.tfBuffer = tf2.Buffer()
         self.listener = tf2.TransformListener(self.tfBuffer)
+        rospy.Subscriber("camera_info",
+                        CameraInfo,
+                        self._callback_camera_info,
+                        queue_size=1)
         rospy.sleep(0.5)
+
+    def _callback_camera_info(self, camera_info):
+        self.camera_info = camera_info
+        self.calculate_fov()
+
+    def calculate_fov(self):
+        K = self.camera_info.K
+        
+        point = Point()
+        point.x = (self.x_resolution - K[2]) / K[0]
+        point.y = (self.y_resolution- K[5]) / K[4]
+        point.z = 1.0
+
+        angles = self.calculate_point_angle(point)
+
+        self.horizontal_fov = int(math.degrees(angles[1]*2))
+        self.vertical_fov = int(math.degrees(angles[0]*2))
 
     def set_resolution(self, x, y):
         self.x_resolution = x
@@ -132,9 +155,13 @@ class BodyMaskObjectFinder(object):
     def work(self):
         joints = ['l_wrist', 'r_wrist', 'l_lower_arm', 'r_lower_arm']
 
-        joint_positions = map(self.transform_joint, joints)
+        try:
+            joint_positions = map(self.transform_joint, joints)
+        except:
+            rospy.loginfo_throttle(10, "Not able to tf arms. If vision runs in sim ignore this message.")
+            return []
         
-        angles = map(self.calculate_arm_point_angle, joint_positions)
+        angles = map(self.calculate_point_angle, joint_positions)
 
         relative_image_points = map(self.image_position_from_angle, angles)
         
@@ -147,10 +174,8 @@ class BodyMaskObjectFinder(object):
         left_arm = (absolute_image_points[0], absolute_image_points[2], thickness[0])
         right_arm = (absolute_image_points[1], absolute_image_points[3], thickness[1])
 
-
         objects = [left_arm, right_arm]
 
-        print(objects)
         return objects
 
     def distance_to_thickness(self, distance):
@@ -166,10 +191,9 @@ class BodyMaskObjectFinder(object):
         return math.sqrt(rjp.x**2 + rjp.y**2 + rjp.z**2)
 
     def transform_joint(self, joint):
-        #TODO try
         return self.tfBuffer.lookup_transform(self.frame, joint, rospy.Time(0)).transform.translation
 
-    def calculate_arm_point_angle(self, relative_joint_position):
+    def calculate_point_angle(self, relative_joint_position):
         y_rotation = math.atan2(float(relative_joint_position.x), float(relative_joint_position.z))
         x_rotation = math.atan2(float(relative_joint_position.y), float(relative_joint_position.z))
         # Finde why its off by factor 2
@@ -182,5 +206,5 @@ class BodyMaskObjectFinder(object):
 
 
 if __name__ == "__main__":
-    # rospy.init_node('body_mask')
+    #rospy.init_node('body_mask')
     body_mask_ball_candidate_filter((360, 640))
