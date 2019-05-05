@@ -32,14 +32,15 @@ class BodyMaskBallCandidateFilter(object):
         while not rospy.is_shutdown():
             self.test()
         """
-        rospy.spin()
+        # rospy.spin()
 
     def get_body_parts(self, image_size):
         # type: () -> [(int, int), (int, int), int]
         """
         TODO
         """
-        self.finder.set_resolution(image_size)
+        self.finder.set_resolution(image_size[1],image_size[0])
+        
         return self.finder.work()
 
     def get_body_mask(self, body_parts, image_size):
@@ -104,7 +105,8 @@ class BodyMaskBallCandidateFilter(object):
         body_mask = self.get_body_mask(body_parts, image_size)
         return [ball_candidate for ball_candidate in ball_candidates if self.ball_candidate_not_on_own_body(
             ball_candidate,
-            body_mask)]
+            body_mask,
+            image_size)]
 
 
 class BodyMaskObjectFinder(object):
@@ -123,7 +125,6 @@ class BodyMaskObjectFinder(object):
                         CameraInfo,
                         self._callback_camera_info,
                         queue_size=1)
-        rospy.sleep(0.5)
 
     def _callback_camera_info(self, camera_info):
         self.camera_info = camera_info

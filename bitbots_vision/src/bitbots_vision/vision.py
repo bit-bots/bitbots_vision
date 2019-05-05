@@ -6,6 +6,7 @@ import yaml
 import rospy
 import rospkg
 import threading
+import numpy as np
 from cv_bridge import CvBridge
 from dynamic_reconfigure.server import Server
 from sensor_msgs.msg import Image
@@ -119,6 +120,7 @@ class Vision:
         if self.config['vision_ball_body_mask_active']:
             shape = np.shape(image)
             image_size = (shape[0], shape[1])
+            balls_not_on_own_body = self.body_mask_ball_candidate_filter.get_ball_candidates_not_on_own_body([], image_size)
             if top_ball_candidate:
                 balls = []
                 balls.append(top_ball_candidate)
