@@ -55,6 +55,8 @@ vision_parallelize: true
 vision_use_sim_color: false
 vision_ball_candidate_horizon_y_offset: 0
 vision_ball_candidate_rating_threshold: 0.5
+vision_ball_body_mask_active: true
+vision_ball_own_body_max_intersection_threshold: 0.2
 vision_debug_printer_classes: ''
 
 line_detector_horizon_offset: 15
