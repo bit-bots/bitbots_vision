@@ -227,7 +227,7 @@ class PixelListColorDetector(ColorDetector):
     def init_color_space(self, color_path):
         # type: (str) -> None
         """
-        Initialization of color space from yaml or pickle.txt file
+        Initialization of color space from .yaml or .pickle file
 
         :param str color_path: path to file containing the accepted colors
         :return: None
@@ -241,8 +241,8 @@ class PixelListColorDetector(ColorDetector):
                     self._debug_printer.error(exc, 'PixelListColorDetector')
                     # TODO: what now??? Handle the error?
 
-        # pickle-file is stored as '.txt'
-        elif color_path.endswith('.txt'):
+        # pickle-file is stored as '.pickle'
+        elif color_path.endswith('.pickle'):
             try:
                 with open(color_path, 'rb') as f:
                     color_values = pickle.load(f)

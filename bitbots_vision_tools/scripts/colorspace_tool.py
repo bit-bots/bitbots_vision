@@ -278,7 +278,7 @@ class ColorspaceTool():
             green = [np.asscalar(x) for x in green]
             blue = [np.asscalar(x) for x in blue]
             output_type = "interpolated"
-            print("Exporting interpolated points")            
+            print("Exporting interpolated points")
         else:
             red, green, blue = self.get_colorspace_points(self.main_cluster)
             output_type = "clustered"
@@ -290,7 +290,7 @@ class ColorspaceTool():
             blue = blue
         )
 
-        filename = '{}_{}.txt'.format(filename, output_type)
+        filename = f'{filename}_{output_type}.pickle'
         with open(filename, 'wb') as outfile:
             pickle.dump(data, outfile, protocol=2)
             # stores data of colorspace in file as pickle for efficient loading (yaml is too slow)
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     tool = ColorspaceTool()
     parser = argparse.ArgumentParser()
     parser.add_argument("-y", "--yaml", help="Input YAML file.")
-    parser.add_argument("-o", "--output", help="Saves the output in a YAML file.", action='store_true')
+    parser.add_argument("-o", "--output", help="Saves the output as a pickle dump file.", action='store_true')
     parser.add_argument("-v", "--visual-output", help="Show graph.", action='store_true')
     parser.add_argument("-nc", "--no-cluster", help="Disables clustering.", action='store_true')
     parser.add_argument("-ni", "--no-interpolation", help="Disables interpolation.", action='store_true')
