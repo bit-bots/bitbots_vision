@@ -26,7 +26,7 @@ except:
 
 # Argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("-id", "--ignore-debug", help="Ignore debug params", action='store_true')
+parser.add_argument("-i", "--ignore-debug", help="Ignore debug params", action='store_true')
 args = parser.parse_args()
 
 # Set yaml stuff
