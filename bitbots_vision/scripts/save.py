@@ -48,7 +48,7 @@ changed_params = 0
 for key in data.keys():
     # Get the current key value from the parameter server
     new_value = rospy.get_param("/bitbots_vision/{}".format(str(key)))
-    # Check if param changed or if its a debug parameter that should be ignored
+    # Check if param changed or if it's a debug parameter that should be ignored
     if new_value != data[key] and (not args.ignore_debug or not key in debug_params):
         data[key] = new_value
         changed_params += 1
