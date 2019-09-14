@@ -11,10 +11,26 @@ A script to combine the parameter description (documentation) of .yaml and dynam
         If SAVE, the DESTINATION file will be overwritten.
 """
 
-def compare(source, destination):
-    print(f"Comparing '{source}' with '{destination}'...")
+def parse_yaml(file):
+    pass
 
-    # TODO: save
+def parse_cfg(file):
+    pass
+
+def compare(source_path, destination_path):
+    print(f"Comparing '{source_path}' with '{destination_path}'...")
+
+    if source_path.endswith(".yaml"):
+        source = parse_yaml(source_path)
+    elif source_path.endswith(".cfg"):
+        source = parse_cfg(source_path)
+
+    if destination_path.endswith(".yaml"):
+        destiniation = parse_yaml(destination_path)
+    elif destination_path.endswith(".cfg"):
+        destination = parse_cfg(destination_path)
+
+    # TODO: compare
 
     print("Finished comparing.")
     # TODO: print statistics
@@ -34,7 +50,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=main_description)
     parser.add_argument("-s", "--save", action="store_true",
-                        help="Save the combined output in the destination file (Default: False)")
+                        help="Save the combined output in the destination_path file (Default: False)")
     parser.add_argument("-S", "--source", action="store", nargs=1, type=str,
                         help="Source file of the parameter description")
     parser.add_argument("-D", "--destination", action="store", nargs=1, type=str,
@@ -47,15 +63,20 @@ if __name__ == "__main__":
     if args.source is None or args.destination is None:
         raise argparse.ArgumentError(None, "Please define a SOURCE and a DESTINATION file.")
 
-    if os.path.samefile(os.path.realpath(args.source[0]), os.path.realpath(args.destination[0])):
+    source_path = os.path.realpath(args.source[0])
+    destination_path = os.path.realpath(args.destination[0])
+
+    if os.path.samefile(source_path, destination_path):
         raise argparse.ArgumentError(None, "SOURCE and DESTINATION can NOT be the same file.")
 
-    source = os.path.realpath(args.source[0])
-    destination = os.path.realpath(args.destination[0])
-    result = compare(source, destination)
+    if not ((source_path.endswith(".yaml") or source_path.endswith(".cfg")) and
+            (destination_path.endswith(".yaml") or destination_path.endswith(".cfg"))):
+        raise argparse.ArgumentError(None, f"SOURCE and DESTINATION file must be '.yaml' OR '.cfg' files.")
+
+    result = compare(source_path, destination_path)
 
     if args.save:
-        save(destination, result)
+        save(destination_path, result)
 
 """
 # Compatibility
