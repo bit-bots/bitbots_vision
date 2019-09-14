@@ -13,15 +13,19 @@ A script to combine the parameter description (documentation) of .yaml and dynam
 
 def main(source_path, destination_path):
     # Parse files for keys and associated description
+    print(f"Analysing '{source_path}'...")
     if source_path.endswith(".yaml"):
         source = parse_yaml(source_path)
     elif source_path.endswith(".cfg"):
         source = parse_cfg(source_path)
+    print(f"Found {len(source)} parameters in '{source_path}'.")
 
+    print(f"\nAnalysing '{destination_path}'...")
     if destination_path.endswith(".yaml"):
         destination = parse_yaml(destination_path)
     elif destination_path.endswith(".cfg"):
         destination = parse_cfg(destination_path)
+    print(f"Found {len(destination)} parameters in '{destination_path}'.")
 
     result = compare(source, destination)
     save(destination_path, result)
@@ -36,12 +40,29 @@ def compare(source, destination):
     # TODO: print statistics
 
 
-def parse_yaml(file):
-    pass
+def parse_yaml(file_path):
+    # Search for parameters in .cfg file
+    # Load line by line
+    lines = tuple(open(file_path, 'r'))
+    # Remove empty lines and whitespace at end of line
+    parameters = [line.strip() for line in lines if line.strip() != ""]
+
+    # Extract key and description from each parameter
+    key_description = {}
+    for parameter in parameters:
+        # Split parameters into arguments by the # char
+        arguments = re.split(r"\s*#\s*", parameter)
+        # Key at argument position 0, remove value
+        key = re.split(r":", arguments[0])[0]
+        # Description at argument position 1, if existent
+        description = ""
+        if len(arguments) > 1:
+            description = arguments[1]
+        key_description[key] = description
+    return key_description
 
 
 def parse_cfg(file_path):
-    print(f"\nAnalysing '{file_path}'...")
     # Search for parameters in .cfg file
     parameters = []
     # Load line by line
@@ -59,8 +80,6 @@ def parse_cfg(file_path):
         # Description at argument position 3, remove quotation around in "description"
         description = arguments[3][1:-1]
         key_description[key] = description
-    print(f"Found {len(key_description)} parameters in '{file_path}'.")
-
     return key_description
 
 
