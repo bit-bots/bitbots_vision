@@ -10,8 +10,19 @@ A script to combine the parameter description (documentation) of .yaml and dynam
         If SAVE, the DESTINATION file will be overwritten.
 """
 
+# TODO: warn for parameters that occur only in one file
+
 
 def main(source_path, destination_path):
+    # Compatibility
+    try:
+        input = raw_input
+    except:
+        pass
+
+    # Blacklist for parameters to exlude further
+    exclude = []
+
     # Parse files for keys and associated description
     print(f"\nAnalysing '{source_path}'...")
     if source_path.endswith(".yaml"):
@@ -23,8 +34,12 @@ def main(source_path, destination_path):
     # Warn, if parameter has no description
     no_description = [key for key in source if source[key] == ""]
     if no_description:
-        print_warn(f"The following {len(no_description)} parameters have no description in SOURCE:")
+        print_warn(f"The following {len(no_description)} parameters have no description in SOURCE file:")
         print(no_description)
+        if input('\x1b[1;37m' + "Do you want to ignore them? [y|n]" + '\x1b[0m' + "\n") == "y":
+            exclude.extend(no_description)
+            print("Parameters with no description in SOURCE file will be ignored.")
+        print(exclude)
 
     print(f"\nAnalysing '{destination_path}'...")
     if destination_path.endswith(".yaml"):
@@ -33,9 +48,19 @@ def main(source_path, destination_path):
         destination = parse_cfg(destination_path)
     print(f"Found {len(destination)} parameters in '{destination_path}'.")
 
+    # Show information about the number of parameters in destination file without description
     no_description = [key for key in destination if destination[key] == ""]
     if no_description:
-        print(f"{len(no_description)} parameters have no description in DESTINATION.")
+        print(f"{len(no_description)} parameters have no description in DESTINATION file.")
+
+    # Search for parameters that occur in only on of the two files
+
+
+    # Warn, if some parameters of the destination file allready have a description, that will be overwritten, if confirmed later
+    """conflicting_descriptions = [key for key in source if source[key] != destination[key] and destination[key] != ""]
+    if conflicting_descriptions:
+        print_warn(f"The following {len(conflicting_descriptions)} parameters allready have some description that will be overwritten if confirmed later:")
+        print(conflicting_descriptions)"""
 
     result = compare(source, destination)
     save(destination_path, result)
@@ -112,7 +137,7 @@ def save(destination, result):
 
 
 def print_warn(message):
-    sys.stderr.write('\x1b[1;33m' + message + '\x1b[0m' + "\n")
+    print('\x1b[1;33m' + message + '\x1b[0m')
 
 
 if __name__ == "__main__":
