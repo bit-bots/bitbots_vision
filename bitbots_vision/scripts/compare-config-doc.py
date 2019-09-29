@@ -28,10 +28,17 @@ def main(source_path, destination_path):
     source_params, source_lines = parse_file(source_path)
     print(f"Found {len(source_params)} parameters in SOURCE file.\n")
 
+    # Warn, if parameter description contains "TODO"
+    description_destination_todo = filter_todo(source_params)
+    if description_destination_todo:
+        print_warn(f"The following {len(description_destination_todo)} parameter descriptions of the SOURCE file contain 'TODO' and will be ignored:")
+        print(description_destination_todo)
+        exclude.extend(description_destination_todo)
+
     # Warn, if parameter has no description
     no_description_source = filter_no_description(source_params)
     if no_description_source:
-        print_warn(f"The following {len(no_description_source)} parameters have no description in SOURCE file:")
+        print_warn(f"\nThe following {len(no_description_source)} parameters have no description in SOURCE file:")
         print(no_description_source)
         if args.yes or yes_or_no_input("Do you want to ignore them? (If no, existing descriptions of the DESTINATION file my be deleted.)"):
             print("These parameters will be ignored...")
@@ -132,8 +139,6 @@ def compare(source, destination, exclude=[]):
     """
     print(f"Comparing descriptions of SOURCE and DESTINATION...")
 
-    # TODO: Check order of the params in both files
-
     # Warn, if parameters occur only in one of the two files
     singleton_a, singleton_b = filter_singleton(source, destination)
     if singleton_a:
@@ -145,10 +150,14 @@ def compare(source, destination, exclude=[]):
         print(singleton_b)
         exclude.extend(singleton_b)
 
-    # Warn, for conflicting descriptions if some parameters of the destination file allready have a description
     excl_source = filter_exclude(source, exclude)
     excl_dest = filter_exclude(destination, exclude)
 
+    # Warn, if the parameter order of SOURCE and DESTINATION differs
+    if excl_source.keys() != excl_dest.keys():
+        print_warn("\nThe order of the parameters of the SOURCE and DESTINATION file is not similar.")
+
+    # Warn, for conflicting descriptions if some parameters of the destination file allready have a description
     description_excl_dest = filter_description(excl_dest)
     conflicting_keys = [key for key in description_excl_dest if excl_source[key] != excl_dest[key]]
     if conflicting_keys:
@@ -157,8 +166,6 @@ def compare(source, destination, exclude=[]):
         if args.yes or yes_or_no_input("Do you want to ignore them? (If no, existing descriptions of the DESTINATION file will be overwritten.)"):
             print("These parameters will be ignored...")
             exclude.extend(conflicting_keys)
-
-    # TODO: Check for "TODO" descriptions
 
     print("Finished comparing.")
     return filter_exclude(source, exclude)
@@ -227,13 +234,23 @@ def save_cfg(params, lines, path):
     """
     raise NotImplementedError
 
+def filter_todo(params):
+    # type: (dict) -> list
+    """
+    Returns keys of parameters which description contains the string "TODO" (Not case sensitive).
+
+    :param dict params: Params to check
+    :return list: Keys of params which descriptions contain "TODO" (Not case sensitive)
+    """
+    return [key for key in params if "todo" in params[key].lower()]
+
 def filter_description(params):
     # type: (dict) -> list
     """
     Returns keys of parameters that have a description.
     
-    :param dict params: all params to check for a description
-    :return list: params that have a description
+    :param dict params: Params to check for a description
+    :return list: Keys of params that have a description
     """
     return [key for key in params if params[key] != ""]
 
@@ -242,8 +259,8 @@ def filter_no_description(params):
     """
     Returns keys of parameters that have no description.
     
-    :param dict params: all params to check for no description
-    :return list: keys of params that have no description
+    :param dict params: Params to check for no description
+    :return list: Keys of params that have no description
     """
     return [key for key in params if params[key] == ""]
 
