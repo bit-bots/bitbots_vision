@@ -91,13 +91,13 @@ def parse_yaml(lines):
         if re.search(r":", line):
             # Valid parameter line, therefore insert new description
             # Split parameters into arguments by the '#' char
-            arguments = re.split(r"\s*#\s*", line)
+            arguments = re.split(r"#", line)
             # Key at argument position 0, remove value and whitespace
             key = re.split(r":", arguments[0])[0].strip()
             # Description at argument position 1, if existent
             description = ""
             if len(arguments) > 1:
-                description = arguments[1]
+                description = arguments[1].strip()
             key_description[key] = description
     return key_description
 
@@ -118,7 +118,7 @@ def parse_cfg(lines):
     # Extract key and description from each parameter
     key_description = {}
     for parameter in parameters:
-        arguments = re.split(r",\s", parameter)
+        arguments = re.split(r",\s", parameter)  # TODO: fix , in description
         # Key at argument position 0, remove quotation around in "key"
         key = arguments[0][1:-1]
         # Description at argument position 3, remove quotation around in "description"
@@ -232,7 +232,34 @@ def save_cfg(params, lines, path):
     :param [str] lines: Lines of the DESTINATION file
     :param str destination_path: Path of the .cfg DESTINATION file to save
     """
-    raise NotImplementedError
+    output_lines = []
+    for line in lines:
+        if re.search(r"\.add\(", line):
+            # Valid parameter line, therefore insert new description, if not ignored
+            parameter = re.split(r".*\.add\(", line)[1]
+            arguments = re.split(r",\s", parameter)
+            # Key at argument position 0, remove quotation around in "key"
+            key = arguments[0][1:-1]
+            if key in params.keys():
+                # Param has not been ignored
+                split_line = re.split(r"\,", line)  # TODO: fix , in description
+                begin_line = split_line[0] + ',' + split_line[1] + ',' + split_line[2]
+                end_line = ""
+                for i in range(4, len(split_line)):
+                    end_line = end_line + split_line[i] + ','
+                new_line = begin_line + ', "' + params[key] + '",' + end_line[:-1]
+                output_lines.append(new_line)
+            else:
+                # Param has been ignored...
+                output_lines.append(line)  # Insert line as is
+        else:
+            # Nonvalid parameter line
+            output_lines.append(line)  # Insert line as is
+    print(output_lines)
+
+    # Save output lines
+    with open(path,"w") as f:
+        f.writelines(output_lines)
 
 def filter_todo(params):
     # type: (dict) -> list
