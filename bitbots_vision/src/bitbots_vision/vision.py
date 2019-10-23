@@ -79,9 +79,9 @@ class Vision:
         srv = Server(VisionConfig, self._dynamic_reconfigure_callback)
 
         # Run the vision main loop
-        self._main_loop()
+        self._main()
 
-    def _main_loop(self):
+    def _main(self):
         """
         Main loop that processes the images and configuration changes
         """
@@ -93,12 +93,16 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        # TODO load images
-        images = [cv2.imread("/home/florian/Desktop/baslergoal1.png")]
-        # Check if a new image is avalabile
-        for image in images:
-            # Run the vision pipeline
-            self._handle_image(image)
+        folders = ["/homes/florian/testdata/363"]
+
+        for folder in folders:
+            for image_file in os.listdir(folder):
+                if image_file.endswith(".jpg") or image_file.endswith(".png"):
+                    image = cv2.imread(os.path.join(folder, image_file))
+                    if image is not None:
+                        self._handle_image(image, os.path.join(folder, image_file))
+                    else:
+                        rospy.logwarn("Image not found!!!")
         cv2.waitKey(0)
 
     def _dynamic_reconfigure_callback(self, config, level):
@@ -240,7 +244,7 @@ class Vision:
         # Transfer the image to the main thread
         self._transfer_image_msg = image_msg
 
-    def _handle_image(self, image):
+    def _handle_image(self, image, image_path):
         """
         Runs the vision pipeline
 
@@ -274,8 +278,7 @@ class Vision:
 
         self._conventional_precalculation()
 
-        cv2.imwrite("/tmp/test.png", self._field_boundary_detector.get_mask())
-
+        cv2.imwrite(image_path, self._field_boundary_detector.get_mask())
 
         self._debug_drawer.set_image(image)
 
