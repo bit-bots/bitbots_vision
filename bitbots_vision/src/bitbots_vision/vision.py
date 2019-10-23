@@ -93,7 +93,7 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        folders = ["/homes/17vahl/testdata/636"]
+        folders = ["/homes/17vahl/testdata/636", "/homes/17vahl/testdata/637", "/homes/17vahl/testdata/638", "/homes/17vahl/testdata/639"]
 
         for folder in folders:
             print(folder)
