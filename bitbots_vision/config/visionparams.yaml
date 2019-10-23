@@ -70,7 +70,7 @@ field_boundary_detector_horizontal_steps: 90
 field_boundary_detector_roi_height: 1
 field_boundary_detector_roi_width: 1
 field_boundary_detector_roi_increase: 0.1  # increase of kernel radius per pixel
-field_boundary_detector_green_threshold: 136
+field_boundary_detector_green_threshold: 40
 field_boundary_detector_precision_pix: 5
 field_boundary_detector_min_precision_pix: 3
 field_boundary_detector_head_tilt_threshold: 20

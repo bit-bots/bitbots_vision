@@ -59,6 +59,8 @@ class Vision:
         # Needed for operations that should only be executed on the first image
         self._first_image_callback = True
 
+        self._debug_drawer = debug.DebugImage()
+
         # Reconfigure dict transfer variable
         self._transfer_reconfigure_data = None
         self._transfer_reconfigure_data_read_flag = False
@@ -92,11 +94,12 @@ class Vision:
         self._configure_vision(*reconfigure_data)
 
         # TODO load images
-        images = [cv2.imread("/home/florian/Desktop/baslergoal.png")]
+        images = [cv2.imread("/home/florian/Desktop/baslergoal1.png")]
         # Check if a new image is avalabile
         for image in images:
             # Run the vision pipeline
             self._handle_image(image)
+        cv2.waitKey(0)
 
     def _dynamic_reconfigure_callback(self, config, level):
         """
@@ -272,6 +275,13 @@ class Vision:
         self._conventional_precalculation()
 
         cv2.imwrite("/tmp/test.png", self._field_boundary_detector.get_mask())
+
+
+        self._debug_drawer.set_image(image)
+
+        self._debug_drawer.draw_mask(self._field_boundary_detector.get_mask(), (255,0,0), opacity=0.8)
+
+        cv2.imshow("Debug img", self._debug_drawer.get_image())
 
     def _conventional_precalculation(self):
         """
