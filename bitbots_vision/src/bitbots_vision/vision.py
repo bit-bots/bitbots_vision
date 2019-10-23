@@ -278,13 +278,15 @@ class Vision:
 
         self._conventional_precalculation()
 
-        cv2.imwrite(image_path, self._field_boundary_detector.get_mask())
+        cv2.imwrite(os.path.join(image_path[0:-4], "label.png"), self._field_boundary_detector.get_mask())
+
+        print("Progressed image" + str(image_path))
 
         self._debug_drawer.set_image(image)
 
         self._debug_drawer.draw_mask(self._field_boundary_detector.get_mask(), (255,0,0), opacity=0.8)
 
-        cv2.imshow("Debug img", self._debug_drawer.get_image())
+        #cv2.imshow("Debug img", self._debug_drawer.get_image())
 
     def _conventional_precalculation(self):
         """
