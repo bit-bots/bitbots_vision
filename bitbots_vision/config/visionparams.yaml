@@ -65,8 +65,8 @@ blue_color_detector_upper_values_s: 255
 blue_color_detector_upper_values_v: 255
 
 field_boundary_detector_search_method: 'reversed'  # iteration, reversed, binary or dynamic
-field_boundary_detector_vertical_steps: 30
-field_boundary_detector_horizontal_steps: 30
+field_boundary_detector_vertical_steps: 90
+field_boundary_detector_horizontal_steps: 90
 field_boundary_detector_roi_height: 1
 field_boundary_detector_roi_width: 1
 field_boundary_detector_roi_increase: 0.1  # increase of kernel radius per pixel
@@ -78,7 +78,7 @@ field_boundary_detector_head_tilt_threshold: 20
 line_detector_field_boundary_offset: 0
 line_detector_use_line_points: true
 line_detector_use_line_mask: true
-line_detector_linepoints_range: 10000
+line_detector_linepoints_range: 0
 
 obstacle_finder_method: 'convex'  # distance, convex or step
 obstacle_color_threshold: 10
