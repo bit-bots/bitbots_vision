@@ -96,14 +96,16 @@ class Vision:
         folders = ["~/testdata/363"]
 
         for folder in folders:
+            print(folder)
             for image_file in os.listdir(folder):
+                print(image_file)
                 if image_file.endswith(".jpg") or image_file.endswith(".png"):
                     image = cv2.imread(os.path.join(folder, image_file))
                     if image is not None:
                         self._handle_image(image, os.path.join(folder, image_file))
                     else:
                         rospy.logwarn("Image not found!!!")
-        cv2.waitKey(0)
+        #cv2.waitKey(0)
 
     def _dynamic_reconfigure_callback(self, config, level):
         """
