@@ -99,7 +99,7 @@ class Vision:
             print(folder)
             if rospy.is_shutdown():
                 pass
-            for image_file in os.listdir(folder):
+            for image_file in sorted(os.listdir(folder)):
                 if rospy.is_shutdown():
                     pass
                 print(image_file)
@@ -256,7 +256,7 @@ class Vision:
 
         :param image: Image
         """
-        self.dyn_color_space.set_image(image)
+        # self.dyn_color_space.set_image(image)
 
         # Skip if image is None
         if image is None:
@@ -286,7 +286,7 @@ class Vision:
 
         cv2.imwrite(os.path.join(image_path[0:-4] + "label.png"), self._field_boundary_detector.get_mask())
 
-        print("Progressed image" + str(image_path) + "to" + os.path.join(image_path[0:-4] + "label.png"))
+        print("Progressed image " + str(image_path) + " to " + os.path.join(image_path[0:-4] + "label.png"))
 
         self._debug_drawer.set_image(image)
 
