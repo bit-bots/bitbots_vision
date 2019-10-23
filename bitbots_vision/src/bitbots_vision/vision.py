@@ -93,7 +93,7 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        folders = ["/homes/florian/testdata/363"]
+        folders = ["~/testdata/363"]
 
         for folder in folders:
             for image_file in os.listdir(folder):
