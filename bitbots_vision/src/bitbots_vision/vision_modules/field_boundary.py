@@ -3,8 +3,6 @@ import cv2
 import rospy
 import abc
 import math
-import tf2_ros as tf2
-from tf.transformations import euler_from_quaternion
 from .color import ColorDetector
 from operator import itemgetter
 
@@ -637,7 +635,7 @@ class BinaryFieldBoundaryAlgorithm(FieldBoundaryAlgorithm):
         """
         Finds the points of the field edge visible in the image. Uses a faster binary search method, that unfortunately
         finds these points below field lines sometimes.
-        
+
         :returns: list of field boundary points
         """
         # calculate the field_mask which contains 0 for non-green pixels and 255 for green pixels in the image
