@@ -31,9 +31,6 @@ class DynamicColorSpace:
         rospack = rospkg.RosPack()
         self._package_path = rospack.get_path('bitbots_vision')
 
-        rospy.init_node('bitbots_dynamic_color_space')
-        rospy.loginfo('Initializing dynamic color-space...', logger_name="dynamic_color_space")
-
         self._cv_bridge = CvBridge()
 
         # Init params
@@ -42,21 +39,7 @@ class DynamicColorSpace:
         # Publisher placeholder
         self._pub_color_space = None
 
-        # Subscriber placeholder
-        self._sub_image_msg = None
-
-        # Subscribe to 'vision_config'-message
-        # The message topic name MUST be the same as in the config publisher in vision.py
-        self._sub_vision_config_msg = rospy.Subscriber(
-            'vision_config',
-            Config,
-            self._vision_config_callback,
-            queue_size=1,
-            tcp_nodelay=True)
-
-        rospy.spin()
-
-    def _vision_config_callback(self, msg):
+    def set_vision_config(self, config):
         # type: (Config) -> None
         """
         This method is called by the 'vision_config'-message subscriber.
@@ -69,7 +52,7 @@ class DynamicColorSpace:
         :return: None
         """
         # Load dict from string in yaml-format in msg.data
-        vision_config = yaml.load(msg.data, Loader=yaml.FullLoader)
+        vision_config = config
 
         # Print status of dynamic color space after toggling 'dynamic_color_space_active' parameter
         if ros_utils.config_param_change(self._vision_config, vision_config, 'dynamic_color_space_active'):
@@ -106,20 +89,9 @@ class DynamicColorSpace:
         # Create a new heuristic instance
         self._heuristic = Heuristic()
 
-        # Subscribe to Image-message
-        self._sub_image_msg = ros_utils.create_or_update_subscriber(
-            self._vision_config,
-            vision_config,
-            self._sub_image_msg,
-            'ROS_img_msg_topic',
-            Image,
-            callback=self._image_callback,
-            queue_size=vision_config['ROS_img_msg_queue_size'],
-            buff_size=60000000) # https://github.com/ros/ros_comm/issues/536
-
         self._vision_config = vision_config
 
-    def _image_callback(self, image_msg):
+    def set_image(self, image):
         # type: (Image) -> None
         """
         This method is called by the Image-message subscriber.
@@ -136,16 +108,9 @@ class DynamicColorSpace:
                 not self._vision_config['dynamic_color_space_active']:
             return
 
-        # Drops old images
-        image_age = rospy.get_rostime() - image_msg.header.stamp
-        if 1.0 < image_age.to_sec() < 1000.0:
-            rospy.logwarn('Vision: Dropped incoming Image-message, because its too old! ({} sec)'.format(image_age.to_sec()),
-                          logger_throttle=2, logger_name="dynamic_color_space")
-            return
+        self._handle_image(image)
 
-        self._handle_image(image_msg)
-
-    def _handle_image(self, image_msg):
+    def _handle_image(self, image):
         # type: (Image) -> None
         """
         This method handles the processing of an Image-message.
@@ -154,8 +119,6 @@ class DynamicColorSpace:
         :param Image image_msg: Image-message
         :return: None
         """
-        # Converting the ROS image message to CV2-image
-        image = self._cv_bridge.imgmsg_to_cv2(image_msg, 'bgr8')
         # Propagate image to color detector
         self._color_detector.set_image(image)
         # Get new dynamic colors from image
@@ -163,7 +126,7 @@ class DynamicColorSpace:
         # Add new colors to the queue
         self._color_value_queue.append(colors)
         # Publishes to 'ROS_dynamic_color_space_msg_topic'
-        self._publish(image_msg)
+        self._publish()
 
     def _get_unique_color_values(self, image, coordinate_list):
         # type: (np.array, np.array) -> np.array
@@ -223,7 +186,7 @@ class DynamicColorSpace:
         # Return a color space, which contains all colors from the queue
         return color_space.astype(int)
 
-    def _publish(self, image_msg):
+    def _publish(self):
         # type: (Image) -> None
         """
         Publishes the current color space via ColorSpace-message.
@@ -235,8 +198,6 @@ class DynamicColorSpace:
         color_space = self._queue_to_color_space(self._color_value_queue)
         # Create ColorSpace-message
         color_space_msg = ColorSpace()
-        color_space_msg.header.frame_id = image_msg.header.frame_id
-        color_space_msg.header.stamp = image_msg.header.stamp
         color_space_msg.blue  = color_space[:, 0].tolist()
         color_space_msg.green = color_space[:, 1].tolist()
         color_space_msg.red   = color_space[:, 2].tolist()
@@ -382,7 +343,3 @@ class Heuristic:
         new_matrix[:, 1] = np.array((input_matrix - (new_matrix[:, 0] * 256 ** 2)) / 256, dtype=np.uint8)
         new_matrix[:, 2] = np.array((input_matrix - (new_matrix[:, 0] * 256 ** 2) - (new_matrix[:, 1] * 256)), dtype=np.uint8)
         return new_matrix
-
-
-if __name__ == '__main__':
-    DynamicColorSpace()
