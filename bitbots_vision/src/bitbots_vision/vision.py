@@ -97,7 +97,11 @@ class Vision:
 
         for folder in folders:
             print(folder)
+            if rospy.is_shutdown():
+                pass
             for image_file in os.listdir(folder):
+                if rospy.is_shutdown():
+                    pass
                 print(image_file)
                 if image_file.endswith(".jpg") or image_file.endswith(".png"):
                     image = cv2.imread(os.path.join(folder, image_file))
