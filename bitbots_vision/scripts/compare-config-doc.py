@@ -4,6 +4,7 @@ import re
 import sys
 import argparse
 
+from dynamic_reconfigure.parameter_generator_catkin import *
 
 """
 A script to compare the parameter description (documentation) of .yaml and dynamic reconfigurable .cfg files.
@@ -105,26 +106,33 @@ def parse_cfg(lines):
     # type: ([str]) -> dict
     """
     Returns dict of parameter keys and descriptions parsed from lines of a .cfg file.
+    IMPORTANT: This does not correctly parse a parameter, that is spread between multiple lines.
     
     :param str file_path: Lines of a .cfg file
     :return dict: parameter keys and descriptions of a .cfg file
     """
-    # Search for parameters in .cfg file
+    # Search for parameters and enums in .cfg file
+    enums = []
     parameters = []
     for line in lines:
+        if re.search(r"\.enum\(", line):
+            enums.append(re.split(r"\=", line)[0].strip())
         if re.search(r"\.add\(", line):
             parameters.append(re.split(r".*\.add\(", line)[1])
-
+    # Define dummy enums
+    for enum in enums:
+        exec(enum + " = None")
     # Extract key and description from each parameter
     key_description = {}
     for parameter in parameters:
-        arguments = re.split(r",\s", parameter)  # TODO: fix , in description
-        # Key at argument position 0, remove quotation around in "key"
-        key = arguments[0][1:-1]
-        # Description at argument position 3, remove quotation around in "description"
-        description = arguments[3][1:-1]
-        key_description[key] = description
+        print(parameter)
+        eval('_interpret_cfg_helper(' + parameter[:-2] + ')')
     return key_description
+
+def _interpret_cfg_helper(*args, **kwargs):
+    for arg in args:
+        print("weiteres arg:", arg) 
+
 
 
 def compare(source, destination, exclude=[]):
