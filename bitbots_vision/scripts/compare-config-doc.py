@@ -114,6 +114,8 @@ def parse_cfg(lines):
     # Search for parameters and enums in .cfg file
     enums = []
     parameters = []
+
+    dummy_list = [None] # TODO: remove
     for line in lines:
         if re.search(r"\.enum\(", line):
             enums.append(re.split(r"\=", line)[0].strip())
@@ -125,15 +127,12 @@ def parse_cfg(lines):
     # Extract key and description from each parameter
     key_description = {}
     for parameter in parameters:
-        print(parameter)
-        eval('_interpret_cfg_helper(' + parameter[:-2] + ')')
+        key, description = eval('_interpret_cfg_helper(' + parameter.rstrip())
+        key_description[key] = description
     return key_description
 
 def _interpret_cfg_helper(*args, **kwargs):
-    for arg in args:
-        print("weiteres arg:", arg) 
-
-
+    return args[0], args[3]
 
 def compare(source, destination, exclude=[]):
     # type: (dict, dict, list) -> dict
