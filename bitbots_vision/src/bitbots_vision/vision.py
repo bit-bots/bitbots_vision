@@ -287,7 +287,12 @@ class Vision:
 
         self._conventional_precalculation()
 
+        if rospy.get_param("field_boundary_mask") == "convex":
+            mask = self._field_boundary_detector.get_convex_mask()
         elif rospy.get_param("field_boundary_mask") == "normal":
+            mask = self._field_boundary_detector.get_mask()
+
+        cv2.imwrite(image_path[0:-4] + ".png", mask)
 
         print("Progressed image to " + os.path.join(image_path[0:-4] + ".png"))
 
