@@ -93,7 +93,7 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        folders = self._config.folders
+        folders = rospy.get_param("folders")
 
         for folder in folders:
             print(folder)
