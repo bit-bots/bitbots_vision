@@ -100,7 +100,7 @@ vision_publish_field_mask_image: false
 ## Autolabel ##
 ###############
 folders: [
-  "/homes/17vahl/testdata/636",
-  "/homes/17vahl/testdata/637",
-  "/homes/17vahl/testdata/638",
-  "/homes/17vahl/testdata/639"]
+  "/homes/17vahl/testdata/636/",
+  "/homes/17vahl/testdata/637/",
+  "/homes/17vahl/testdata/638/",
+  "/homes/17vahl/testdata/639/"]

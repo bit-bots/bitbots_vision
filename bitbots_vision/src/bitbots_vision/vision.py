@@ -106,7 +106,7 @@ class Vision:
                 if image_file.endswith(".jpg") or image_file.endswith(".png"):
                     image = cv2.imread(os.path.join(folder, image_file))
                     if image is not None:
-                        out_folder = folder + "_label"
+                        out_folder = folder[0:-1] + "_label"
                         if not os.path.exists(out_folder):
                                 os.makedirs(out_folder)
                         self._handle_image(image, os.path.join(out_folder, image_file))
