@@ -93,7 +93,7 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        folders = rospy.get_param("folders")
+        folders = rospy.get_param("~folders")
 
         for folder in folders:
             print(folder)
@@ -106,7 +106,10 @@ class Vision:
                 if image_file.endswith(".jpg") or image_file.endswith(".png"):
                     image = cv2.imread(os.path.join(folder, image_file))
                     if image is not None:
-                        self._handle_image(image, os.path.join(folder[0:-1] + "_label", image_file))
+                        out_folder = folder + "_label"
+                        if not os.path.exists(out_folder):
+                                os.makedirs(out_folder)
+                        self._handle_image(image, os.path.join(out_folder, image_file))
                     else:
                         rospy.logwarn("Image not found!!!")
         #cv2.waitKey(0)
@@ -286,7 +289,7 @@ class Vision:
 
         cv2.imwrite(image_path[0:-4] + ".png", self._field_boundary_detector.get_mask())
 
-        print("Progressed image " + str(image_path) + " to " + os.path.join(image_path[0:-4] + ".png"))
+        print("Progressed image to " + os.path.join(image_path[0:-4] + ".png"))
 
         self._debug_drawer.set_image(image)
 
