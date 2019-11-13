@@ -100,7 +100,17 @@ vision_publish_field_mask_image: false
 ## Autolabel ##
 ###############
 folders: [
-  "/homes/17vahl/testdata/636/",
-  "/homes/17vahl/testdata/637/",
-  "/homes/17vahl/testdata/638/",
-  "/homes/17vahl/testdata/639/"]
+  "/srv/ssd/deep_field/data/label_type1/607/",
+  "/srv/ssd/deep_field/data/label_type1/608/",
+  "/srv/ssd/deep_field/data/label_type1/610/",
+  "/srv/ssd/deep_field/data/label_type1/611/",
+  "/srv/ssd/deep_field/data/label_type1/613/",
+  "/srv/ssd/deep_field/data/label_type1/624/",
+  "/srv/ssd/deep_field/data/label_type1/625/",
+  "/srv/ssd/deep_field/data/label_type1/625/",
+  "/srv/ssd/deep_field/data/label_type1/627/",
+  "/srv/ssd/deep_field/data/label_type1/628/",
+  "/srv/ssd/deep_field/data/label_type1/637/",
+  "/srv/ssd/deep_field/data/label_type1/638/",
+  "/srv/ssd/deep_field/data/label_type1/639/",
+  ]
