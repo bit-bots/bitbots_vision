@@ -287,7 +287,7 @@ class Vision:
 
         self._conventional_precalculation()
 
-        cv2.imwrite(image_path[0:-4] + ".png", self._field_boundary_detector.get_mask())
+        elif rospy.get_param("field_boundary_mask") == "normal":
 
         print("Progressed image to " + os.path.join(image_path[0:-4] + ".png"))
 

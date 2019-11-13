@@ -73,6 +73,15 @@ class FieldBoundaryDetector(object):
         self._compute_mask()
         return self._mask
 
+    def get_convex_mask(self):
+        shape = np.shape(self._image)
+        img_size = (shape[0], shape[1])
+        # Generates a white canvas
+        canvas = np.ones(img_size, dtype=np.uint8) * 255
+        hpoints = np.array([[(0, 0)] + self.get_convex_field_boundary_points() + [(shape[1] - 1, 0)]])
+        # Blacks out the part over the field_boundary
+        return cv2.fillPoly(canvas, hpoints, 0)
+
     def _compute_mask(self):
         # type: () -> None
         """

@@ -114,3 +114,5 @@ folders: [
   "/srv/ssd/deep_field/data/label_type1/638/638/",
   "/srv/ssd/deep_field/data/label_type1/639/639/",
   ]
+
+field_boundary_mask: "convex"
