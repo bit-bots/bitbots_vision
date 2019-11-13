@@ -301,7 +301,7 @@ class Vision:
 
         self._debug_drawer.set_image(image)
 
-        self._debug_drawer.draw_mask(self._field_boundary_detector.get_mask(), (255,0,0), opacity=0.8)
+        self._debug_drawer.draw_mask(mask, (255,0,0), opacity=0.8)
 
         cv2.imwrite(debug_path[0:-4] + ".png", self._debug_drawer.get_image())
 
