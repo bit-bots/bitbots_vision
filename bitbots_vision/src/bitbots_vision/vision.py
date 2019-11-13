@@ -107,9 +107,12 @@ class Vision:
                     image = cv2.imread(os.path.join(folder, image_file))
                     if image is not None:
                         out_folder = folder[0:-1] + "_label"
+                        debug_folder = folder[0:-1] + "_debug"
                         if not os.path.exists(out_folder):
                                 os.makedirs(out_folder)
-                        self._handle_image(image, os.path.join(out_folder, image_file))
+                        if not os.path.exists(debug_folder):
+                                os.makedirs(debug_folder)
+                        self._handle_image(image, os.path.join(out_folder, image_file), os.path.join(debug_folder, image_file))
                     else:
                         rospy.logwarn("Image not found!!!")
         #cv2.waitKey(0)
@@ -253,7 +256,7 @@ class Vision:
         # Transfer the image to the main thread
         self._transfer_image_msg = image_msg
 
-    def _handle_image(self, image, image_path):
+    def _handle_image(self, image, image_path, debug_path):
         """
         Runs the vision pipeline
 
@@ -300,7 +303,7 @@ class Vision:
 
         self._debug_drawer.draw_mask(self._field_boundary_detector.get_mask(), (255,0,0), opacity=0.8)
 
-        #cv2.imshow("Debug img", self._debug_drawer.get_image())
+        cv2.imwrite(debug_path[0:-4] + ".png", self._debug_drawer.get_image())
 
     def _conventional_precalculation(self):
         """
