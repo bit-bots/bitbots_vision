@@ -6,6 +6,7 @@ import rospy
 import rospkg
 import threading
 import time
+import yaml
 from copy import deepcopy
 from cv_bridge import CvBridge
 from dynamic_reconfigure.server import Server
@@ -13,8 +14,7 @@ from sensor_msgs.msg import Image
 from humanoid_league_msgs.msg import BallsInImage, LineInformationInImage, \
     ObstaclesInImage, ObstacleInImage, ImageWithRegionOfInterest, \
     GoalPartsInImage, FieldBoundaryInImage, Speak
-from bitbots_vision.vision_modules import lines, field_boundary, color, debug, \
-    fcnn_handler, live_fcnn_03, dummy_ballfinder, obstacle, yolo_handler, ros_utils
+from bitbots_vision.vision_modules import lines, field_boundary, color, debug, obstacle, ros_utils
 from bitbots_vision.cfg import VisionConfig
 from bitbots_msgs.msg import Config, ColorSpace
 from dynamic_color_space import DynamicColorSpace
@@ -70,7 +70,7 @@ class Vision:
         self._transfer_image_msg_read_flag = False
 
         # Add model enums to _config
-        ros_utils.add_model_enums(VisionConfig, self._package_path)
+        # ros_utils.add_model_enums(VisionConfig, self._package_path)
         ros_utils.add_color_space_enum(VisionConfig, self._package_path)
 
         self.dyn_color_space = DynamicColorSpace()
@@ -96,25 +96,42 @@ class Vision:
         folders = rospy.get_param("~folders")
 
         for folder in folders:
-            print(folder)
+            print(f"Looking for datasets in '{folder}'...")
             if rospy.is_shutdown():
                 pass
-            for image_file in sorted(os.listdir(folder)):
+            subfolders = [f.path for f in os.scandir(folder) if f.is_dir()]
+            subfolders.append(folder)
+            for subfolder in subfolders:
                 if rospy.is_shutdown():
                     pass
-                print(image_file)
-                if image_file.endswith(".jpg") or image_file.endswith(".png"):
-                    image = cv2.imread(os.path.join(folder, image_file))
-                    if image is not None:
-                        out_folder = folder[0:-1] + "_label"
-                        debug_folder = folder[0:-1] + "_debug"
-                        if not os.path.exists(out_folder):
-                                os.makedirs(out_folder)
-                        if not os.path.exists(debug_folder):
-                                os.makedirs(debug_folder)
-                        self._handle_image(image, os.path.join(out_folder, image_file), os.path.join(debug_folder, image_file))
-                    else:
-                        rospy.logwarn("Image not found!!!")
+                config_path = os.path.join(subfolder, "config.yaml")
+                if os.path.isfile(config_path):
+                    print(f"Loading config file '{config_path}'...")
+                    with open(config_path, "r") as config_file:
+                        new_config = yaml.load(config_file, Loader=yaml.SafeLoader)
+                    tmp_config = self._config.copy()
+                    for k in new_config.keys():
+                        tmp_config[k] = new_config[k]
+                    self._configure_vision(tmp_config, 0)
+                else:
+                    print(f"No config found at '{config_path}'...")
+                print(f"Looking for files in '{subfolder}'...")
+                for file in sorted(os.listdir(folder)):
+                    if rospy.is_shutdown():
+                        pass
+                    if file.endswith(".jpg") or file.endswith(".png"):
+                        print(f"Loading '{file}'...")
+                        image = cv2.imread(os.path.join(folder, file))
+                        if image is not None:
+                            out_folder = folder[0:-1] + "_label"
+                            debug_folder = folder[0:-1] + "_debug"
+                            if not os.path.exists(out_folder):
+                                    os.makedirs(out_folder)
+                            if not os.path.exists(debug_folder):
+                                    os.makedirs(debug_folder)
+                            self._handle_image(image, os.path.join(out_folder, file), os.path.join(debug_folder, file))
+                        else:
+                            rospy.logwarn("Image not found!!!")
         #cv2.waitKey(0)
 
     def _dynamic_reconfigure_callback(self, config, level):
@@ -163,6 +180,7 @@ class Vision:
         # Check if params changed
         if ros_utils.config_param_change(self._config, config,
                 r'^field_color_detector_|dynamic_color_space_'):
+            print("COLOR_SPACE")
             # Check if the dynamic color space field color detector or the static field color detector should be used
             if self._use_dynamic_color_space:
                 # Set dynamic color space field color detector
