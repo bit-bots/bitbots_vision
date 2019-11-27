@@ -10,13 +10,6 @@ from bitbots_vision.vision_modules import field_boundary, color, debug
 
 class Vision:
     def __init__(self):
-        # type () -> None
-        """
-        Vision is the main ROS-node for handling all tasks related to image processing.
-        Initiating 'bitbots_vision' node.
-
-        :return: None
-        """
         self._base_config_path = sys.argv[1]
         print(self._base_config_path)
         self._config = {}
@@ -31,12 +24,6 @@ class Vision:
         return new_config
 
     def _configure_vision(self, config):
-        """
-        Reconfigure configuration.
-
-        :param config: New config
-        """
-        
         # Set the static field color detector
         self._field_color_detector = color.PixelListColorDetector(
             config,
@@ -55,9 +42,6 @@ class Vision:
         self._config = config
 
     def _main(self):
-        """
-        Main loop that processes the images and configuration changes
-        """
         devider = "~"*100
         print(devider)
 
@@ -103,11 +87,6 @@ class Vision:
         self._configure_vision(default_config, 0)
 
     def _handle_image(self, image_file):
-        """
-        Runs the vision pipeline
-
-        :param str image_file: Path to image file in image_dir
-        """
         image_path = os.path.basename(image_file)
         image = cv2.imread(os.path.join(self.image_dir, image_path))
 
@@ -122,9 +101,9 @@ class Vision:
         self._field_color_detector.compute()
 
         mask = None
-        if rospy.get_param("~field_boundary_mask") == "convex":
+        if self._config['field_boundary_mask'] == "convex":
             mask = self._field_boundary_detector.get_convex_mask()
-        elif rospy.get_param("~field_boundary_mask") == "normal":
+        elif self._config['field_boundary_mask'] == "normal":
             mask = self._field_boundary_detector.get_mask()
         else:
             print("WARNING: Unknown field_boundary_mask parameter!")
