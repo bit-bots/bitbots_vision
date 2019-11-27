@@ -7,6 +7,7 @@ import rospkg
 import threading
 import time
 import yaml
+import glob
 from copy import deepcopy
 from cv_bridge import CvBridge
 from dynamic_reconfigure.server import Server
@@ -93,46 +94,56 @@ class Vision:
         # Run vision reconfiguration
         self._configure_vision(*reconfigure_data)
 
-        folders = rospy.get_param("~folders")
+        devider = "~"*100
+        print(devider)
 
-        for folder in folders:
-            print(f"Looking for datasets in '{folder}'...")
+        default_config = self._config.copy()
+
+        dataset_roots = rospy.get_param("~dataset_roots")
+
+        for ds_root in dataset_roots:
             if rospy.is_shutdown():
-                pass
-            subfolders = [f.path for f in os.scandir(folder) if f.is_dir()]
-            subfolders.append(folder)
-            for subfolder in subfolders:
+                return
+
+            print(f"Loading dataset at '{ds_root}'...")
+
+            # Generating dataset paths
+            self.config_path = os.path.join(ds_root, "config.yaml")
+            self.image_dir = os.path.join(ds_root, "images/")
+            self.labels_dir = os.path.join(ds_root, "labels/")
+            self.debug_dir = os.path.join(ds_root, "debug/")
+
+            if not os.path.exists(self.labels_dir):
+                os.makedirs(self.labels_dir)
+            if not os.path.exists(self.debug_dir):
+                os.makedirs(self.debug_dir)
+
+            # Overwrite default config with dataset specific config
+            if os.path.isfile(self.config_path):
+                print(f"Loading config file at '{self.config_path}'...")
+                with open(self.config_path, "r") as config_file:
+                    new_config = yaml.load(config_file, Loader=yaml.SafeLoader)
+                tmp_config = default_config.copy()
+                for k in new_config.keys():
+                    tmp_config[k] = new_config[k]
+                self._configure_vision(tmp_config, 0)
+            else:
+                print(f"No config file found at '{self.config_path}'...")
+
+            # Load images and generate labels and debug images
+            image_files = glob.glob(f"{self.image_dir}*.jpg") + glob.glob(f"{self.image_dir}*.png")
+            for image_file in sorted(image_files):
                 if rospy.is_shutdown():
-                    pass
-                config_path = os.path.join(subfolder, "config.yaml")
-                if os.path.isfile(config_path):
-                    print(f"Loading config file '{config_path}'...")
-                    with open(config_path, "r") as config_file:
-                        new_config = yaml.load(config_file, Loader=yaml.SafeLoader)
-                    tmp_config = self._config.copy()
-                    for k in new_config.keys():
-                        tmp_config[k] = new_config[k]
-                    self._configure_vision(tmp_config, 0)
-                else:
-                    print(f"No config found at '{config_path}'...")
-                print(f"Looking for files in '{subfolder}'...")
-                for file in sorted(os.listdir(folder)):
-                    if rospy.is_shutdown():
-                        pass
-                    if file.endswith(".jpg") or file.endswith(".png"):
-                        print(f"Loading '{file}'...")
-                        image = cv2.imread(os.path.join(folder, file))
-                        if image is not None:
-                            out_folder = folder[0:-1] + "_label"
-                            debug_folder = folder[0:-1] + "_debug"
-                            if not os.path.exists(out_folder):
-                                    os.makedirs(out_folder)
-                            if not os.path.exists(debug_folder):
-                                    os.makedirs(debug_folder)
-                            self._handle_image(image, os.path.join(out_folder, file), os.path.join(debug_folder, file))
-                        else:
-                            rospy.logwarn("Image not found!!!")
-        #cv2.waitKey(0)
+                    return
+                print(f"Loading image file at'{image_file}'...")
+                success = self._handle_image(os.path.basename(image_file))
+                if not success:
+                    print(f"Error while loading image file at '{image_file}'...")
+
+            print(devider)
+
+        # Restore default config
+        self._configure_vision(default_config, 0)
 
     def _dynamic_reconfigure_callback(self, config, level):
         """
@@ -180,7 +191,6 @@ class Vision:
         # Check if params changed
         if ros_utils.config_param_change(self._config, config,
                 r'^field_color_detector_|dynamic_color_space_'):
-            print("COLOR_SPACE")
             # Check if the dynamic color space field color detector or the static field color detector should be used
             if self._use_dynamic_color_space:
                 # Set dynamic color space field color detector
@@ -274,18 +284,20 @@ class Vision:
         # Transfer the image to the main thread
         self._transfer_image_msg = image_msg
 
-    def _handle_image(self, image, image_path, debug_path):
+    def _handle_image(self, image_file):
         """
         Runs the vision pipeline
 
-        :param image: Image
+        :param str image_file: Path to image file in image_dir
         """
-        # self.dyn_color_space.set_image(image)
+
+        image = cv2.imread(os.path.join(self.image_dir, image_file))
 
         # Skip if image is None
         if image is None:
-            rospy.logdebug("Image content is None :(", logger_name="vision")
-            return
+            return False
+
+        # self.dyn_color_space.set_image(image)
 
         # Instances that should be notified with the new image
         internal_image_subscribers =[
@@ -308,20 +320,19 @@ class Vision:
 
         self._conventional_precalculation()
 
+        mask = None
         if rospy.get_param("~field_boundary_mask") == "convex":
             mask = self._field_boundary_detector.get_convex_mask()
         elif rospy.get_param("~field_boundary_mask") == "normal":
             mask = self._field_boundary_detector.get_mask()
 
-        cv2.imwrite(image_path[0:-4] + ".png", mask)
-
-        print("Progressed image to " + os.path.join(image_path[0:-4] + ".png"))
+        cv2.imwrite(self.labels_dir + image_file[0:-4] + ".png", mask)
 
         self._debug_drawer.set_image(image)
-
         self._debug_drawer.draw_mask(mask, (255,0,0), opacity=0.8)
+        cv2.imwrite(self.debug_dir + image_file[0:-4] + ".png", self._debug_drawer.get_image())
 
-        cv2.imwrite(debug_path[0:-4] + ".png", self._debug_drawer.get_image())
+        return True
 
     def _conventional_precalculation(self):
         """
