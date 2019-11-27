@@ -1,68 +1,6 @@
 # Defining the default vision parameters
 
-vision_parallelize: true
-vision_blind_threshold: 30
-
-ROS_img_msg_topic: 'image_raw'
-ROS_img_msg_queue_size: 1
-ROS_fcnn_img_msg_topic: 'fcnn_image'
-ROS_field_boundary_msg_topic: 'field_boundary_in_image'
-ROS_ball_msg_topic: 'balls_in_image'
-ROS_goal_parts_msg_topic: 'goal_parts_in_image'
-ROS_obstacle_msg_topic: 'obstacles_in_image'
-ROS_line_msg_topic: 'line_in_image'
-ROS_line_mask_msg_topic: 'line_mask_in_image'
-ROS_dynamic_color_space_msg_topic: 'dynamic_color_space'
-ROS_debug_image_msg_topic: 'debug_image'
-ROS_debug_fcnn_image_msg_topic: 'fcnn_debug_image'
-ROS_white_HSV_mask_image_msg_topic: 'white_HSV_field_mask'
-ROS_red_HSV_mask_image_msg_topic: 'red_HSV_field_mask'
-ROS_blue_HSV_mask_image_msg_topic: 'blue_HSV_field_mask'
-ROS_field_mask_image_msg_topic: 'field_mask'
-ROS_dynamic_color_space_field_mask_image_msg_topic: 'dynamic_field_mask'
-
-fcnn_model_path: '2019_06_timon_basler'
-yolo_model_path: '2019_07_03_jonas_yolo'
-ball_fcnn_threshold: .6  # minimal value for a candidate to be considered
-ball_fcnn_expand_stepsize: 4
-ball_fcnn_pointcloud_stepsize: 10
-ball_fcnn_min_ball_diameter: 15
-ball_fcnn_max_ball_diameter: 150
-ball_fcnn_publish_output: false
-ball_fcnn_publish_field_boundary_offset: 5
-
-neural_network_type: 'yolo_darknet'  # fcnn or yolo_opencv or yolo_darknet or dummy
-ball_candidate_field_boundary_y_offset: 0
-ball_candidate_rating_threshold: 0.5
-
 field_color_detector_path: 'basler_f031.pickle'
-
-dynamic_color_space_active: true
-dynamic_color_space_queue_max_size: 20
-dynamic_color_space_threshold: 0.6
-dynamic_color_space_kernel_radius: 1
-dynamic_color_space_field_boundary_detector_search_method: 'reversed' # iteration, reversed, binary or dynamic
-
-white_color_detector_lower_values_h: 101
-white_color_detector_lower_values_s: 0
-white_color_detector_lower_values_v: 158
-white_color_detector_upper_values_h: 180
-white_color_detector_upper_values_s: 255
-white_color_detector_upper_values_v: 255
-
-red_color_detector_lower_values_h: 139
-red_color_detector_lower_values_s: 50
-red_color_detector_lower_values_v: 0
-red_color_detector_upper_values_h: 255
-red_color_detector_upper_values_s: 255
-red_color_detector_upper_values_v: 255
-
-blue_color_detector_lower_values_h: 90
-blue_color_detector_lower_values_s: 197
-blue_color_detector_lower_values_v: 134
-blue_color_detector_upper_values_h: 116
-blue_color_detector_upper_values_s: 255
-blue_color_detector_upper_values_v: 255
 
 field_boundary_detector_search_method: 'reversed'  # iteration, reversed, binary or dynamic
 field_boundary_detector_vertical_steps: 90
@@ -75,44 +13,12 @@ field_boundary_detector_precision_pix: 5
 field_boundary_detector_min_precision_pix: 3
 field_boundary_detector_head_tilt_threshold: 20
 
-line_detector_field_boundary_offset: 0
-line_detector_use_line_points: true
-line_detector_use_line_mask: true
-line_detector_linepoints_range: 0
-
-obstacle_finder_method: 'convex'  # distance, convex or step
-obstacle_color_threshold: 10
-obstacle_white_threshold: 12
-obstacle_field_boundary_diff_threshold: 20
-obstacle_candidate_field_boundary_offset: 30
-obstacle_candidate_min_width: 15
-obstacle_candidate_max_width: 150
-obstacle_finder_step_length: 5
-obstacle_finder_value_increase: 2.0
-
-vision_publish_debug_image: false
-ball_fcnn_publish_debug_img: false  # toggles publishing of the fcnn heatmap image for debug purposes
-vision_publish_HSV_mask_image: false
-vision_publish_field_mask_image: false
-
-
 ###############
 ## Autolabel ##
 ###############
-folders: [
-  "/srv/ssd/deep_field/data/label_type1/607/607/",
-  "/srv/ssd/deep_field/data/label_type1/608/608/",
-  "/srv/ssd/deep_field/data/label_type1/610/610/",
-  "/srv/ssd/deep_field/data/label_type1/611/611/",
-  "/srv/ssd/deep_field/data/label_type1/613/613/",
-  "/srv/ssd/deep_field/data/label_type1/624/624/",
-  "/srv/ssd/deep_field/data/label_type1/625/625/",
-  "/srv/ssd/deep_field/data/label_type1/625/625/",
-  "/srv/ssd/deep_field/data/label_type1/627/627/",
-  "/srv/ssd/deep_field/data/label_type1/628/628/",
-  "/srv/ssd/deep_field/data/label_type1/637/637/",
-  "/srv/ssd/deep_field/data/label_type1/638/638/",
-  "/srv/ssd/deep_field/data/label_type1/639/639/",
+
+dataset_roots: [
+  "/srv/ssd/deep_field/data/group1/607/",
   ]
 
 field_boundary_mask: "convex"
