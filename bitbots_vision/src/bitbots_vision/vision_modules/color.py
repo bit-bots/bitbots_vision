@@ -244,7 +244,7 @@ class PixelListColorDetector(ColorDetector):
         'field_color_detector_path'
     """
 
-    def __init__(self, config, package_path):
+    def __init__(self, config):
         # type:(dict, str) -> None
         """
         Initialization of PixelListColorDetector.
@@ -253,8 +253,6 @@ class PixelListColorDetector(ColorDetector):
         :param str package_path: path of package
         :return: None
         """
-        self._package_path = package_path
-
         # Initialization of parent ColorDetector.
         super(PixelListColorDetector, self).__init__(config)
 
@@ -271,11 +269,7 @@ class PixelListColorDetector(ColorDetector):
 
         super(PixelListColorDetector, self).update_config(config)
 
-        if ros_utils.config_param_change(tmp_config, config, 'field_color_detector_path'):
-            # concatenate path to file containing the accepted colors of base color space
-            path = os.path.join(self._package_path, 'config/color_spaces')
-            color_space_path = os.path.join(path, config['field_color_detector_path'])
-            self._color_space = self._init_color_space(color_space_path)
+        self._color_space = self._init_color_space(config['field_color_detector_path'])
 
     def _init_color_space(self, color_path):
         # type: (str) -> None
@@ -332,114 +326,3 @@ class PixelListColorDetector(ColorDetector):
         :return np.array: masked image
         """
         return VisionExtensions.maskImg(image, self._color_space)
-
-
-class DynamicPixelListColorDetector(PixelListColorDetector):
-    """
-    DynamicPixelListColorDetector is a ColorDetector, that is based on a lookup table of color values.
-    The color space is initially loaded from color-space-file at color_path (in config)
-    and optionally adjustable to changing color conditions (dynamic color space).
-    The color space is represented by boolean-values for RGB-color-values.
-    """
-    def __init__(self, config, package_path):
-        # type:(dict, str) -> None
-        """
-        Initialization of DynamicPixelListColorDetector.
-
-        :param dict config: dictionary of the vision node configuration parameters
-        :param str package_path: path of package
-        :return: None
-        """
-        self._static_mask = None
-
-        # Initialization of parent PixelListColorDetector.
-        super(DynamicPixelListColorDetector, self).__init__(config, package_path)
-
-        # Annotate global variable. The global is needed due to threading issues
-        global _dyn_color_space
-        _dyn_color_space = np.copy(self._color_space)
-
-        # Annotate global variable. The global is needed due to threading issues
-        global _base_color_space
-        _base_color_space = np.copy(self._color_space)
-
-    def set_image(self, image):
-        # type: (np.array) -> None
-        """
-        Refreshes class variables after receiving an image
-
-        :param image: the current frame of the video feed
-        :return: None
-        """
-        self._static_mask = None
-
-        super(DynamicPixelListColorDetector, self).set_image(image)
-
-    def get_static_mask_image(self, optional_image=None):
-        # type: (np.array) -> np.array
-        """
-        Returns the color mask of the cached (or optional given) image based on the static color space
-        (0 for not in color range and 255 for in color range)
-
-        :param np.array optional_image: Optional input image
-        :return np.array: masked image
-        """
-        global _base_color_space
-
-        if optional_image is not None:
-            # Mask of optional image
-            mask = self._mask_image(optional_image, _base_color_space)
-        else:
-            # Mask of default cached image
-            mask = self._mask = self._mask_image(self._image, _base_color_space)
-
-        return mask
-
-    def _mask_image(self, image, color_space=None):
-        # type: (np.array) -> np.array
-        """
-        Returns the color mask of the image based on the dynamic color space unless other is specified
-        (0 for not in color range and 255 for in color range)
-
-        :param np.array image: input image
-        :param np.array color_space: Optional color space
-        :return np.array: masked image
-        """
-        if color_space is None:
-            global _dyn_color_space
-            color_space = _dyn_color_space
-
-        return VisionExtensions.maskImg(image, color_space)
-
-    def color_space_callback(self, msg):
-        # type: (ColorSpace) -> None
-        """
-        This callback gets called inside the vision node, after subscriber received ColorSpaceMessage from DynamicColorSpace-Node.
-
-        :param ColorSpaceMessage msg: ColorSpaceMessage
-        :return: None
-        """
-        self._decode_color_space(msg)
-
-    def _decode_color_space(self, msg):
-        # type: (ColorSpaceMessage) -> None
-        """
-        Imports new color space from ros msg. This is used to communicate with the DynamicColorSpace-Node.
-
-        :param ColorSpaceMessage msg: ColorSpaceMessage
-        :return: None
-        """
-        # Create temporary color space
-        # Use the base color space as basis
-        global _base_color_space
-        color_space_temp = np.copy(_base_color_space)
-
-        # Adds new colors to that color space
-        color_space_temp[
-            msg.blue,
-            msg.green,
-            msg.red] = 1
-
-        # Switches the reference to the new color space
-        global _dyn_color_space
-        _dyn_color_space = color_space_temp

@@ -19,15 +19,13 @@ class Vision:
         self._main()
 
     def _read_config(self, config_path):
-        with open(self.config_path, "r") as config_file:
+        with open(config_path, "r") as config_file:
             new_config = yaml.load(config_file, Loader=yaml.SafeLoader)
         return new_config
 
     def _configure_vision(self, config):
         # Set the static field color detector
-        self._field_color_detector = color.PixelListColorDetector(
-            config,
-            self._package_path)
+        self._field_color_detector = color.PixelListColorDetector(config)
 
         # Get field boundary detector class by name from _config
         field_boundary_detector_class = field_boundary.FieldBoundaryDetector.get_by_name(
@@ -66,8 +64,7 @@ class Vision:
             # Overwrite default config with dataset specific config
             if os.path.isfile(self.config_path):
                 print(f"Loading config file at '{self.config_path}'...")
-                with open(self.config_path, "r") as config_file:
-                    new_config = yaml.load(config_file, Loader=yaml.SafeLoader)
+                new_config = self._read_config(self.config_path)
                 tmp_config = default_config.copy()
                 for k in new_config.keys():
                     tmp_config[k] = new_config[k]
