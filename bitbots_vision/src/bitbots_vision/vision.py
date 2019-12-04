@@ -5,7 +5,8 @@ import os
 import cv2
 import yaml
 import glob
-from bitbots_vision.vision_modules import field_boundary, color, debug
+import numpy as np
+from vision_modules import field_boundary, color, debug
 
 
 class Vision:
@@ -81,7 +82,7 @@ class Vision:
             print(devider)
 
         # Restore default config
-        self._configure_vision(default_config, 0)
+        self._configure_vision(default_config)
 
     def _handle_image(self, image_file):
         image_path = os.path.basename(image_file)
@@ -106,7 +107,14 @@ class Vision:
             print("WARNING: Unknown field_boundary_mask parameter!")
             return
 
-        cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", mask)
+        normalized_mask = np.floor_divide(mask, 255, dtype=np.int16)
+
+        shape = normalized_mask.shape
+        new_mask = np.zeros((shape[0], shape[1], 3))
+
+        new_mask[:,:,2] = normalized_mask
+
+        cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", new_mask)
 
         self._debug_drawer.set_image(image)
         self._debug_drawer.draw_mask(mask, (255,0,0), opacity=0.8)
