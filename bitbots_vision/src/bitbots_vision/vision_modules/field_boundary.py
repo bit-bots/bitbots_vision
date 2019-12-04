@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import rospy
 import abc
 import math
 from .color import ColorDetector
@@ -43,7 +42,6 @@ class FieldBoundaryDetector(object):
         :param image: the current frame of the video feed
         """
         detectors = {
-            'dynamic': DynamicFieldBoundaryDetector,
             'binary': BinaryFieldBoundaryDetector,
             'reversed': ReversedFieldBoundaryDetector,
             'iteration': IterationFieldBoundaryDetector,
@@ -301,7 +299,6 @@ class FieldBoundaryDetector(object):
         :return a boolean if point is under field_boundary:
         """
         if not 0 <= point[0] < len(self.get_full_field_boundary()):
-            rospy.logwarn('point_under_field_boundary got called with an out of bounds field_boundary point', logger_name="vision_field_boundary")
             return False
         return point[1] + offset > self.get_full_field_boundary()[point[0]]
 
@@ -315,7 +312,6 @@ class FieldBoundaryDetector(object):
         :return a boolean if point is under the convex field_boundary:
         """
         if not 0 <= point[0] < len(self.get_full_convex_field_boundary()):
-            rospy.logwarn('point_under_field_boundary got called with an out of bounds field_boundary point', logger_name="vision_field_boundary")
             return False
         return point[1] + offset > self.get_full_convex_field_boundary()[point[0]]
 
@@ -432,7 +428,7 @@ class ReversedFieldBoundaryDetector(FieldBoundaryDetector):
             self._green_threshold)
 
 
-class DynamicFieldBoundaryDetector(FieldBoundaryDetector):
+'''class DynamicFieldBoundaryDetector(FieldBoundaryDetector):
     def __init__(self, config, field_color_detector):
         """
         This is the dynamic field boundary detector.
@@ -451,7 +447,6 @@ class DynamicFieldBoundaryDetector(FieldBoundaryDetector):
         self._tilt_threshold = math.radians(config['field_boundary_detector_head_tilt_threshold'])
 
         # TF stuff
-        self._tf_buffer = tf2.Buffer(cache_time=rospy.Duration(5))
         self._tf_listener = tf2.TransformListener(self._tf_buffer)
 
     def _only_field_visible(self):
@@ -505,7 +500,7 @@ class DynamicFieldBoundaryDetector(FieldBoundaryDetector):
             self._roi_height,
             self._roi_width,
             self._roi_increase,
-            self._green_threshold)
+            self._green_threshold)'''
 
 class FieldBoundaryAlgorithm():
     """

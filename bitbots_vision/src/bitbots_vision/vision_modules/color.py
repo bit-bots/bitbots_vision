@@ -2,13 +2,9 @@ import abc
 import cv2
 import yaml
 import pickle
-import rospy
 import VisionExtensions
 import numpy as np
 import os
-from cv_bridge import CvBridge
-from bitbots_vision.vision_modules import ros_utils
-
 
 class ColorDetector(object):
     """
@@ -26,7 +22,6 @@ class ColorDetector(object):
         :return: None
         """
         # Initial setup
-        self._cv_bridge = CvBridge()
 
         self._image = None
         self._mask = None
@@ -43,7 +38,6 @@ class ColorDetector(object):
         :param dict config: dictionary of the vision node configuration parameters
         :return: None
         """
-        rospy.logdebug("(RE-)Configuring of ColorDetector", logger_name="vision_color_detector")
         self._config = config
 
     @abc.abstractmethod
@@ -205,7 +199,6 @@ class HsvSpaceColorDetector(ColorDetector):
                         config[self._detector_name + '_upper_values_v']
                 ])
         except KeyError:
-            rospy.logerr("Undefined hsv color values for '{}'. Check config values.".format(self._detector_name), logger_name="vision_hsv_color_detector")
             raise
 
     def match_pixel(self, pixel):
@@ -285,7 +278,7 @@ class PixelListColorDetector(ColorDetector):
                 try:
                     color_values = yaml.safe_load(stream)
                 except yaml.YAMLError as exc:
-                    rospy.logerr(exc, logger_name="vision_pixellist_color_detector")
+                    pass
 
         # pickle-file is stored as '.pickle'
         elif color_path.endswith('.pickle'):
@@ -293,7 +286,7 @@ class PixelListColorDetector(ColorDetector):
                 with open(color_path, 'rb') as f:
                     color_values = pickle.load(f)
             except pickle.PickleError as exc:
-                rospy.logerr(exc, logger_name="vision_pixellist_color_detector")
+                pass
 
         # compatibility with colorpicker
         if 'color_values' in color_values.keys():
