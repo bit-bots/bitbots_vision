@@ -20,7 +20,18 @@ field_boundary_detector_head_tilt_threshold: 20
 dataset_roots: [
   "/srv/ssd_nvm/deep_field/data/group1/638",
   "/srv/ssd_nvm/deep_field/data/group1/639",
+  "/srv/ssd_nvm/deep_field/data/group1/608",
+  "/srv/ssd_nvm/deep_field/data/group1/610",
+  "/srv/ssd_nvm/deep_field/data/group1/611",
+  "/srv/ssd_nvm/deep_field/data/group1/613",
+  "/srv/ssd_nvm/deep_field/data/group1/624",
+  "/srv/ssd_nvm/deep_field/data/group1/625",
+  "/srv/ssd_nvm/deep_field/data/group1/626",
+  "/srv/ssd_nvm/deep_field/data/group1/627",
+  "/srv/ssd_nvm/deep_field/data/group1/628",
+  "/srv/ssd_nvm/deep_field/data/group1/637",
   ]
+
   #  "/srv/ssd_nvm/deep_field/data/group1/17",
   #  "/srv/ssd_nvm/deep_field/data/group1/18",
   #  "/srv/ssd_nvm/deep_field/data/group1/165",
@@ -30,14 +41,6 @@ dataset_roots: [
   #  "/srv/ssd_nvm/deep_field/data/group1/210",
   #  "/srv/ssd_nvm/deep_field/data/group1/259",
   #  "/srv/ssd_nvm/deep_field/data/group1/607",
-  #  "/srv/ssd_nvm/deep_field/data/group1/608",
-  #  "/srv/ssd_nvm/deep_field/data/group1/610",
-  #  "/srv/ssd_nvm/deep_field/data/group1/611",
-  #  "/srv/ssd_nvm/deep_field/data/group1/613",
-  #  "/srv/ssd_nvm/deep_field/data/group1/624",
-  #  "/srv/ssd_nvm/deep_field/data/group1/625",
-  #  "/srv/ssd_nvm/deep_field/data/group1/626",
-  #  "/srv/ssd_nvm/deep_field/data/group1/627",
-  #  ]
+
 
 field_boundary_mask: "convex"
