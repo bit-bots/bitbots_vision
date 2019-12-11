@@ -43,7 +43,7 @@ class Vision:
         self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
 
         # Set the line detector
-        self._line_detector = lines.LineDetector(config, self._white_color_detector, self._field_boundary_detector)
+        self._line_detector = lines.LineDetector(config, self._white_color_detector, self._field_color_detector, self._field_boundary_detector)
 
         # The old _config gets replaced with the new _config
         self._config = config
@@ -96,15 +96,15 @@ class Vision:
         image_path = os.path.basename(image_file)
         image = cv2.imread(os.path.join(self.image_dir, image_path))
 
-        # Create empty label image
-        image_shape = image.shape
-        label = np.zeros((shape[0], image_shape[1], 3))
-        self._label_drawer.set_image(label)
-
         # Skip if image is None
         if image is None:
             print(f"WARNING: Can not load image file at '{image_file}'...")
             return
+
+        # Create empty label image
+        image_shape = image.shape
+        label = np.zeros((image_shape[0], image_shape[1], 3), dtype=np.uint8)
+        self._label_drawer.set_image(label)
 
         self._field_color_detector.set_image(image)
         self._field_boundary_detector.set_image(image)
@@ -128,7 +128,7 @@ class Vision:
         label[:,:,1] = field_boundary_normalized_mask
         label[:,:,2] = field_boundary_normalized_mask"""
 
-        self._label_drawer(field_boundary_mask, (1, 1, 1), opacity=1)
+        self._label_drawer.draw_mask(field_boundary_mask, (1, 1, 1), opacity=1)
         label = self._label_drawer.get_image()
 
 
