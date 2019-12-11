@@ -6,7 +6,7 @@ import cv2
 import yaml
 import glob
 import numpy as np
-from vision_modules import field_boundary, color, debug
+from vision_modules import field_boundary, color, debug, lines
 
 
 class Vision:
@@ -25,6 +25,8 @@ class Vision:
         return new_config
 
     def _configure_vision(self, config):
+        self._label_drawer = debug.DebugImage()
+
         # Set the static field color detector
         self._field_color_detector = color.PixelListColorDetector(config)
 
@@ -36,6 +38,12 @@ class Vision:
         self._field_boundary_detector = field_boundary_detector_class(
             config,
             self._field_color_detector)
+
+        # Set the white color detector
+        self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
+
+        # Set the line detector
+        self._line_detector = lines.LineDetector(config, self._white_color_detector, self._field_boundary_detector)
 
         # The old _config gets replaced with the new _config
         self._config = config
@@ -88,6 +96,11 @@ class Vision:
         image_path = os.path.basename(image_file)
         image = cv2.imread(os.path.join(self.image_dir, image_path))
 
+        # Create empty label image
+        image_shape = image.shape
+        label = np.zeros((shape[0], image_shape[1], 3))
+        self._label_drawer.set_image(label)
+
         # Skip if image is None
         if image is None:
             print(f"WARNING: Can not load image file at '{image_file}'...")
@@ -98,29 +111,46 @@ class Vision:
 
         self._field_color_detector.compute()
 
-        mask = None
+        # Handle field boundary
+        field_boundary_mask = None
         if self._config['field_boundary_mask'] == "convex":
-            mask = self._field_boundary_detector.get_convex_mask()
+            field_boundary_mask = self._field_boundary_detector.get_convex_mask()
         elif self._config['field_boundary_mask'] == "normal":
-            mask = self._field_boundary_detector.get_mask()
+            field_boundary_mask = self._field_boundary_detector.get_mask()
         else:
             print("WARNING: Unknown field_boundary_mask parameter!")
             return
+        
+        """# Convert mask from values (0, 255) to (0, 1)
+        field_boundary_normalized_mask = np.floor_divide(field_boundary_mask, 255, dtype=np.int16)
 
-        normalized_mask = np.floor_divide(mask, 255, dtype=np.int16)
+        label[:,:,0] = field_boundary_normalized_mask
+        label[:,:,1] = field_boundary_normalized_mask
+        label[:,:,2] = field_boundary_normalized_mask"""
 
-        shape = normalized_mask.shape
-        new_mask = np.zeros((shape[0], shape[1], 3))
-
-        new_mask[:,:,0] = normalized_mask
-        new_mask[:,:,1] = normalized_mask
-        new_mask[:,:,2] = normalized_mask
+        self._label_drawer(field_boundary_mask, (1, 1, 1), opacity=1)
+        label = self._label_drawer.get_image()
 
 
-        cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", new_mask)
+        # Handle lines
+        if self._config['lines']:
+            self._white_color_detector.set_image(image)
+            self._line_detector.set_image(image)
+            self._white_color_detector.compute()
+            self._line_detector.compute()
+
+            line_mask = self._line_detector.get_line_mask()
+
+            self._label_drawer.set_image(label)
+            self._label_drawer.draw_mask(line_mask, (2, 2, 2), opacity=1)
+            label = self._label_drawer.get_image()
+
+        cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", label)
 
         self._debug_drawer.set_image(image)
-        self._debug_drawer.draw_mask(mask, (255,0,0), opacity=0.8)
+        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.5)
+        if self._config['lines']:
+            self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.5)
         cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
 
 
