@@ -1,6 +1,6 @@
 # Defining the default vision parameters
 
-field_color_detector_path: 'basler_f031.pickle'
+field_color_detector_path: '/homes/17gutsche/catkin_ws/src/bitbots_meta/bitbots_vision/bitbots_vision/config/color_spaces/basler_f031.pickle'
 
 field_boundary_detector_search_method: 'downsampling_reversed'  # Method for finding the field boundary (iteration, reversed, downsampling_reversed, binary, dynamic)
 field_boundary_detector_vertical_steps: 90
@@ -18,7 +18,26 @@ field_boundary_detector_head_tilt_threshold: 20
 ###############
 
 dataset_roots: [
-  "/srv/ssd/deep_field/data/group1/607/",
+  "/srv/ssd_nvm/deep_field/data/group1/638",
+  "/srv/ssd_nvm/deep_field/data/group1/639",
   ]
+  #  "/srv/ssd_nvm/deep_field/data/group1/17",
+  #  "/srv/ssd_nvm/deep_field/data/group1/18",
+  #  "/srv/ssd_nvm/deep_field/data/group1/165",
+  #  "/srv/ssd_nvm/deep_field/data/group1/177",
+  #  "/srv/ssd_nvm/deep_field/data/group1/196",
+  #  "/srv/ssd_nvm/deep_field/data/group1/208",
+  #  "/srv/ssd_nvm/deep_field/data/group1/210",
+  #  "/srv/ssd_nvm/deep_field/data/group1/259",
+  #  "/srv/ssd_nvm/deep_field/data/group1/607",
+  #  "/srv/ssd_nvm/deep_field/data/group1/608",
+  #  "/srv/ssd_nvm/deep_field/data/group1/610",
+  #  "/srv/ssd_nvm/deep_field/data/group1/611",
+  #  "/srv/ssd_nvm/deep_field/data/group1/613",
+  #  "/srv/ssd_nvm/deep_field/data/group1/624",
+  #  "/srv/ssd_nvm/deep_field/data/group1/625",
+  #  "/srv/ssd_nvm/deep_field/data/group1/626",
+  #  "/srv/ssd_nvm/deep_field/data/group1/627",
+  #  ]
 
 field_boundary_mask: "convex"

@@ -112,7 +112,10 @@ class Vision:
         shape = normalized_mask.shape
         new_mask = np.zeros((shape[0], shape[1], 3))
 
+        new_mask[:,:,0] = normalized_mask
+        new_mask[:,:,1] = normalized_mask
         new_mask[:,:,2] = normalized_mask
+
 
         cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", new_mask)
 
