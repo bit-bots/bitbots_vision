@@ -2,6 +2,15 @@
 
 field_color_detector_path: '/homes/17gutsche/catkin_ws/src/bitbots_meta/bitbots_vision/bitbots_vision/config/color_spaces/basler_f031.pickle'
 
+line_color_detector_path: '/homes/17gutsche/catkin_ws/src/bitbots_meta/bitbots_vision/bitbots_vision/config/color_spaces/basler_f031.pickle'
+
+white_color_detector_lower_values_h: 101  # Lower bound for the white color detector hue
+white_color_detector_lower_values_s: 0  # Lower bound for the white color detector saturation
+white_color_detector_lower_values_v: 158  # Lower bound for the white color detector value/brightness
+white_color_detector_upper_values_h: 180  # Upper bound for the white color detector hue
+white_color_detector_upper_values_s: 255  # Upper bound for the white color detector saturation
+white_color_detector_upper_values_v: 255  # Upper bound for the white color detector value/brightness
+
 field_boundary_detector_search_method: 'downsampling_reversed'  # Method for finding the field boundary (iteration, reversed, downsampling_reversed, binary, dynamic)
 field_boundary_detector_vertical_steps: 90
 field_boundary_detector_horizontal_steps: 90
@@ -12,13 +21,6 @@ field_boundary_detector_green_threshold: 40
 field_boundary_detector_precision_pix: 5
 field_boundary_detector_min_precision_pix: 3
 field_boundary_detector_head_tilt_threshold: 20
-
-white_color_detector_lower_values_h: 101  # Lower bound for the white color detector hue
-white_color_detector_lower_values_s: 0  # Lower bound for the white color detector saturation
-white_color_detector_lower_values_v: 158  # Lower bound for the white color detector value/brightness
-white_color_detector_upper_values_h: 180  # Upper bound for the white color detector hue
-white_color_detector_upper_values_s: 255  # Upper bound for the white color detector saturation
-white_color_detector_upper_values_v: 255  # Upper bound for the white color detector value/brightness
 
 line_detector_field_boundary_offset: 0  # Threshold in which we are also searching for lines over the field boundary
 line_detector_use_line_points: false  # Calculate and publish the line points
@@ -57,3 +59,4 @@ dataset_roots: [
 
 field_boundary_mask: "convex"
 lines: true
+lines_hsv: false

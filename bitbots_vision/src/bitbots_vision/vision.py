@@ -28,7 +28,13 @@ class Vision:
         self._label_drawer = debug.DebugImage()
 
         # Set the static field color detector
-        self._field_color_detector = color.PixelListColorDetector(config)
+        self._field_color_detector = color.PixelListColorDetector(config, "field_color_detector_path")
+
+        # Set the static line color detector
+        self._line_color_detector = color.PixelListColorDetector(config, "line_color_detector_path")
+
+        # Set the white color detector
+        self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
 
         # Get field boundary detector class by name from _config
         field_boundary_detector_class = field_boundary.FieldBoundaryDetector.get_by_name(
@@ -39,11 +45,11 @@ class Vision:
             config,
             self._field_color_detector)
 
-        # Set the white color detector
-        self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
-
         # Set the line detector
-        self._line_detector = lines.LineDetector(config, self._white_color_detector, self._field_color_detector, self._field_boundary_detector)
+        if config["lines_hsv"]:
+            self._line_detector = lines.LineDetector(config, self._white_color_detector, self._field_color_detector, self._field_boundary_detector)
+        else:
+            self._line_detector = lines.LineDetector(config, self._line_color_detector, self._field_color_detector, self._field_boundary_detector)
 
         # The old _config gets replaced with the new _config
         self._config = config
@@ -120,13 +126,6 @@ class Vision:
         else:
             print("WARNING: Unknown field_boundary_mask parameter!")
             return
-        
-        """# Convert mask from values (0, 255) to (0, 1)
-        field_boundary_normalized_mask = np.floor_divide(field_boundary_mask, 255, dtype=np.int16)
-
-        label[:,:,0] = field_boundary_normalized_mask
-        label[:,:,1] = field_boundary_normalized_mask
-        label[:,:,2] = field_boundary_normalized_mask"""
 
         self._label_drawer.draw_mask(field_boundary_mask, (1, 1, 1), opacity=1)
         label = self._label_drawer.get_image()
