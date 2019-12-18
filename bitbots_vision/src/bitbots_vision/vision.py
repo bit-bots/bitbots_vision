@@ -148,9 +148,9 @@ class Vision:
         cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", label)
 
         self._debug_drawer.set_image(image)
-        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.5)
+        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.3)
         if self._config['lines']:
-            self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.5)
+            self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.8)
         cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
 
 
