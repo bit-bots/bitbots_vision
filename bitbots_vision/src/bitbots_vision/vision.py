@@ -6,6 +6,7 @@ import cv2
 import yaml
 import glob
 import numpy as np
+import multiprocessing
 from vision_modules import field_boundary, color, debug, lines
 
 
@@ -62,41 +63,48 @@ class Vision:
 
         dataset_roots = self._config['dataset_roots']
 
+        procs = []
+
         for ds_root in dataset_roots:
-            print(f"Loading dataset at '{ds_root}'...")
+            proc = multiprocessing.Process(target=self._handle_dataset, args=[ds_root, default_config])
+            procs.append(proc)
+            proc.start()
 
-            # Generating dataset paths
-            self.config_path = os.path.join(ds_root, "config.yaml")
-            self.image_dir = os.path.join(ds_root, "images/")
-            self.labels_dir = os.path.join(ds_root, "labels/")
-            self.debug_dir = os.path.join(ds_root, "debug/")
+        for proc in procs:
+            proc.join()
 
-            if not os.path.exists(self.labels_dir):
-                os.makedirs(self.labels_dir)
-            if not os.path.exists(self.debug_dir):
-                os.makedirs(self.debug_dir)
+    def _handle_dataset(self, ds_root, default_config):
+        print(f"Loading dataset at '{ds_root}'...")
 
-            # Overwrite default config with dataset specific config
-            if os.path.isfile(self.config_path):
-                print(f"Loading config file at '{self.config_path}'...")
-                new_config = self._read_config(self.config_path)
-                tmp_config = default_config.copy()
-                for k in new_config.keys():
-                    tmp_config[k] = new_config[k]
-                self._configure_vision(tmp_config)
-            else:
-                print(f"No config file found at '{self.config_path}'...")
+        # Generating dataset paths
+        self.config_path = os.path.join(ds_root, "config.yaml")
+        self.image_dir = os.path.join(ds_root, "images/")
+        self.labels_dir = os.path.join(ds_root, "labels/")
+        self.debug_dir = os.path.join(ds_root, "debug/")
 
-            # Load images and generate labels and debug images
-            image_files = glob.glob(f"{self.image_dir}*.jpg") + glob.glob(f"{self.image_dir}*.png")
-            for image_file in sorted(image_files):
-                print(f"Loading image file at'{image_file}'...")
-                self._handle_image(image_file)
+        if not os.path.exists(self.labels_dir):
+            os.makedirs(self.labels_dir)
+        if not os.path.exists(self.debug_dir):
+            os.makedirs(self.debug_dir)
 
-            print(devider)
+        # Overwrite default config with dataset specific config
+        if os.path.isfile(self.config_path):
+            print(f"Loading config file at '{self.config_path}'...")
+            new_config = self._read_config(self.config_path)
+            tmp_config = default_config.copy()
+            for k in new_config.keys():
+                tmp_config[k] = new_config[k]
+            self._configure_vision(tmp_config)
+        else:
+            print(f"No config file found at '{self.config_path}'...")
 
-        # Restore default config
-        self._configure_vision(default_config)
+        # Load images and generate labels and debug images
+        image_files = glob.glob(f"{self.image_dir}*.jpg") + glob.glob(f"{self.image_dir}*.png")
+        for image_file in sorted(image_files):
+            print(f"Loading image file at'{image_file}'...")
+            self._handle_image(image_file)
+
+        print(devider)
 
     def _handle_image(self, image_file):
         image_path = os.path.basename(image_file)
@@ -147,7 +155,7 @@ class Vision:
         cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", label)
 
         self._debug_drawer.set_image(image)
-        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.3)
+        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.5)
         if self._config['lines']:
             self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.8)
         cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
