@@ -6,13 +6,16 @@
 #
 # Press key:
 # 1 -> move current image to $Trash subdirectory
-# 2 -> Move current image to $Balls subdirectory
-# 3 -> Move current image to $Goals subdirectory
 
 Trash="unusable"
-Balls="balls"
-Goals="goalposts"
 
-mkdir $Trash $Balls $Goals
+debug="./debug/$Trash"
+labels="./labels/$Trash"
 
-feh -Z -F -d --action1 "mv '%f' $Trash" --action2 "mv '%f' $Balls" --action3 "mv '%f' $Goals"
+mkdir -p $debug
+mkdir -p $labels
+
+mv_debug='mv ./debug/$(basename "%f") ./debug/unusable/'
+mv_labels='mv ./labels/$(basename "%f") ./labels/unusable/'
+
+feh -Z -F -d --action1 "$mv_debug && $mv_labels" ./debug/*
