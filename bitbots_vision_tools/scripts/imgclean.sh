@@ -9,13 +9,13 @@
 
 Trash="unusable"
 
-debug="./debug/$Trash"
-labels="./labels/$Trash"
+debug="./debug_$Trash"
+labels="./labels_$Trash"
 
 mkdir -p $debug
 mkdir -p $labels
 
-mv_debug='mv ./debug/$(basename "%f") ./debug/unusable/'
-mv_labels='mv ./labels/$(basename "%f") ./labels/unusable/'
+mv_debug='mv ./debug/$(basename "%f")'
+mv_labels='mv ./labels/$(basename "%f")'
 
-feh -Z -F -d --action1 "$mv_debug && $mv_labels" ./debug/*
+feh -Z -F -d --action1 "$mv_debug $debug && $mv_labels $labels" ./debug/*
