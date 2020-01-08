@@ -237,13 +237,14 @@ class PixelListColorDetector(ColorDetector):
         'field_color_detector_path'
     """
 
-    def __init__(self, config):
-        # type:(dict, str) -> None
+    def __init__(self, config, key):
+        # type:(dict, str, str) -> None
         """
         Initialization of PixelListColorDetector.
 
         :param dict config: dictionary of the vision node configuration parameters
         :param str package_path: path of package
+        :param str key: key of the color space file parameter in config
         :return: None
         """
         # Initialization of parent ColorDetector.
@@ -262,7 +263,7 @@ class PixelListColorDetector(ColorDetector):
 
         super(PixelListColorDetector, self).update_config(config)
 
-        self._color_space = self._init_color_space(config['field_color_detector_path'])
+        self._color_space = self._init_color_space(config[key])
 
     def _init_color_space(self, color_path):
         # type: (str) -> None
