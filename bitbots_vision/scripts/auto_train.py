@@ -27,7 +27,7 @@ for modelname, model in all_models.model_from_frame.items()
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
-        checkpoints_path = os.path.join(checkpoints_base_path, modelname + "_" + time.strftime("%d_%m_%y_%H:%M:%S", time.localtime())),
+        checkpoints_path = os.path.join(checkpoints_base_path, modelname + "_" + time.strftime("%d_%m_%y_%H_%M_%S", time.localtime())),
         epochs=epochs
     )
 
