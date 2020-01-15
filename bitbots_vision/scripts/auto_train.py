@@ -26,13 +26,12 @@ for modelname, model in all_models.model_from_name.items():
 
     model = model(n_classes=n_classes, input_width=input_width, input_height=input_height)
 
-    modelpath = modelname + "_" + time.strftime("%d_%m_%y_%H_%M_%S", time.localtime()) + "/" + modelname
+    modelpath = modelname + "_" + time.strftime("%d_%m_%y", time.localtime()) + "/" + modelname
 
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
         checkpoints_path = os.path.join(checkpoints_base_path, modelpath),
-        epochs=epochs
-    )
+        epochs=epochs)
 
     del model
