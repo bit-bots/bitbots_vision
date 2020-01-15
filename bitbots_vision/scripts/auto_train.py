@@ -24,10 +24,12 @@ for modelname, model in all_models.model_from_name.items():
     print(devider)
     print("Training with model: {}".format(modelname))
 
+    modelpath = modelname + "_" + time.strftime("%d_%m_%y_%H_%M_%S", time.localtime()) + "/" + modelname
+
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
-        checkpoints_path = os.path.join(checkpoints_base_path, modelname + "_" + time.strftime("%d_%m_%y_%H_%M_%S", time.localtime() + "/" + modelname)),
+        checkpoints_path = os.path.join(checkpoints_base_path, modelpath),
         epochs=epochs
     )
 
