@@ -161,7 +161,7 @@ class HsvSpaceColorDetector(ColorDetector):
     HsvSpaceColorDetector is a ColorDetector, that is based on the HSV-color space.
     The HSV-color space is adjustable by setting min- and max-values for hue, saturation and value.
     """
-    def __init__(self, config, color_str):
+    def __init__(self, config, color_str, key):
         # type: (dict, str) -> None
         """
         Initialization of HsvSpaceColorDetector.
@@ -173,9 +173,9 @@ class HsvSpaceColorDetector(ColorDetector):
         self._detector_name = "{}_color_detector".format(color_str)
 
         # Initialization of parent ColorDetector.
-        super(HsvSpaceColorDetector, self).__init__(config)
+        super(HsvSpaceColorDetector, self).__init__(config, key)
 
-    def update_config(self, config):
+    def update_config(self, config, key):
         # type: (dict) -> None
         """
         Update (or initiate) the color detector setup with the new config.
@@ -184,7 +184,7 @@ class HsvSpaceColorDetector(ColorDetector):
         :param dict config: dictionary of the vision node configuration parameters
         :return: None
         """
-        super(HsvSpaceColorDetector, self).update_config(config)
+        super(HsvSpaceColorDetector, self).update_config(config, key)
 
         try:
             self._min_vals = np.array([
@@ -297,7 +297,7 @@ class PixelListColorDetector(ColorDetector):
                 length == len(color_values['blue']):
             # setting colors from yaml file to True in color space
             for x in range(length):
-                color_space[color_values['blue'][x], color_values['green'][x], color_values['red'][x]] = 1
+                color_space[color_values['blue'][x], color_values['green'][x], color_values['red'][x]] = 0
         return color_space
 
     def match_pixel(self, pixel):

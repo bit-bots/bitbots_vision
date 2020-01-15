@@ -35,7 +35,7 @@ class Vision:
         self._line_color_detector = color.PixelListColorDetector(config, "line_color_detector_path")
 
         # Set the white color detector
-        self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
+        self._white_color_detector = color.HsvSpaceColorDetector(config, "white", None)
 
         # Get field boundary detector class by name from _config
         field_boundary_detector_class = field_boundary.FieldBoundaryDetector.get_by_name(
@@ -56,9 +56,6 @@ class Vision:
         self._config = config
 
     def _main(self):
-        devider = "~"*100
-        print(devider)
-
         default_config = self._config.copy()
 
         dataset_roots = self._config['dataset_roots']
@@ -74,6 +71,7 @@ class Vision:
             proc.join()
 
     def _handle_dataset(self, ds_root, default_config):
+        devider = "~"*100
         print(f"Loading dataset at '{ds_root}'...")
 
         # Generating dataset paths
