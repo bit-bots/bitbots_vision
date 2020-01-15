@@ -18,8 +18,8 @@ train_annotations = "/srv/ssd_nvm/deep_field/data/group_all/labels/"
 checkpoints_base_path = "/srv/ssd_nvm/deep_field/models/"
 epochs = 15
 
-for modelname, model in all_models.model_from_frame.items()
-    model = fcn_8(n_classes=n_classes, input_width=input_width, input_height=input_height)
+for modelname, model in all_models.model_from_name.items():
+    model = model(n_classes=n_classes, input_width=input_width, input_height=input_height)
 
     print(devider)
     print("Training with model: {}".format(modelname))
@@ -27,9 +27,11 @@ for modelname, model in all_models.model_from_frame.items()
     model.train(
         train_images = train_images,
         train_annotations = train_annotations,
-        checkpoints_path = os.path.join(checkpoints_base_path, modelname + "_" + time.strftime("%d_%m_%y_%H_%M_%S", time.localtime())),
+        checkpoints_path = os.path.join(checkpoints_base_path, modelname + time.strftime("_%d_%m_%y_%H_%M_%S/", time.localtime())),
         epochs=epochs
     )
+
+    del model
 
 
 """
