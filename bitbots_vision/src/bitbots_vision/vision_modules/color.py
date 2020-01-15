@@ -13,7 +13,7 @@ class ColorDetector(object):
     or to create masked binary images.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, key):
         # type: (dict) -> None
         """
         Initialization of ColorDetector.
@@ -27,9 +27,9 @@ class ColorDetector(object):
         self._mask = None
 
         self._config = {}
-        self.update_config(config)
+        self.update_config(config, key)
 
-    def update_config(self, config):
+    def update_config(self, config, key):
         # type: (dict) -> None
         """
         Update (or initiate) the color detector setup with the new config.
@@ -248,9 +248,9 @@ class PixelListColorDetector(ColorDetector):
         :return: None
         """
         # Initialization of parent ColorDetector.
-        super(PixelListColorDetector, self).__init__(config)
+        super(PixelListColorDetector, self).__init__(config, key)
 
-    def update_config(self, config):
+    def update_config(self, config, key):
         # type: (dict) -> None
         """
         Update (or initiate) the color detector setup with the new config.
@@ -261,7 +261,7 @@ class PixelListColorDetector(ColorDetector):
         """
         tmp_config = self._config.copy()
 
-        super(PixelListColorDetector, self).update_config(config)
+        super(PixelListColorDetector, self).update_config(config, key)
 
         self._color_space = self._init_color_space(config[key])
 
