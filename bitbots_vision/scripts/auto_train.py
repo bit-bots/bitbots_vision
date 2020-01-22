@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import os
-import time
 import cv2
 import numpy
 
@@ -9,29 +8,71 @@ from keras_segmentation.models import all_models
 
 devider = "~"*100
 
-# Arguments
-###########
-n_classes = 2
-input_width = 224
-input_height = 224
+# Default config
+################
+default_config = {}
+default_config['epochs'] = 1  # Number of epochs
+default_config['n_classes'] = 2  # Number of segmentation classes
+default_config['input_width'] = 192  # Input width
+default_config['input_height'] = 192  # Input height
+default_config['train_images'] = "/srv/ssd_nvm/deep_field/data/group_all/images/"  # Path to image dataset
+default_config['train_annotations'] = "/srv/ssd_nvm/deep_field/data/group_all/labels/"  # Path to label dataset
+default_config['checkpoints_base_path'] = "/srv/ssd_nvm/deep_field/models/16_01_20/"  # Path to store checkpoints
 
-train_images = "/srv/ssd_nvm/deep_field/data/group_all/images/"
-train_annotations = "/srv/ssd_nvm/deep_field/data/group_all/labels/"
-checkpoints_base_path = "/srv/ssd_nvm/deep_field/models/"
-epochs = 25
 
-for modelname, model in all_models.model_from_name.items():
+# Model config
+##############
+models = {}
+models['fcn_8'] = {}
+models['fcn_32'] = {}
+models['fcn_8_vgg'] = {}
+models['fcn_32_vgg'] = {}
+models['fcn_8_mobilenet'] = {}
+models['fcn_32_mobilenet'] = {}
+models['pspnet'] = {'input_width': 192, 'input_height': 192}
+models['vgg_pspnet'] = {'input_width': 192, 'input_height': 192}
+models['unet_mini'] = {}
+models['unet'] = {}
+models['mobilenet_unet'] = {'input_width': 224, 'input_height': 224}
+models['mobilenet_segnet'] = {'input_width': 224, 'input_height': 224}
+models['segnet'] = {}
+models['vgg_segnet'] = {}
+
+# Models, that run only on the CPU
+cpu_models = {}
+cpu_models['fcn_8_resnet50'] = {}
+cpu_models['fcn_32_resnet50'] = {}
+cpu_models['vgg_unet'] = {}
+
+# Models, that do not run for some reason
+blacklist_models = {}
+blacklist_models['resnet50_pspnet'] = {'input_width': 192, 'input_height': 192}  # ValueError: Negative dimension size caused by subtracting 7 from 6 for 'avg_pool/AvgPool' (op: 'AvgPool'│ ) with input shapes: [?,6,6,2048].
+blacklist_models['pspnet_50'] = {}  # Pooling parameters for input shape  (192, 192)  are not defined.
+blacklist_models['pspnet_101'] = {}  # Pooling parameters for input shape  (192, 192)  are not defined.
+blacklist_models['resnet50_unet'] = {}  # ValueError: Negative dimension size caused by subtracting 7 from 6 for 'avg_pool/AvgPool' (op: 'AvgPool') with input shapes: [?,6,6,2048].
+blacklist_models['resnet50_segnet'] = {}  # ValueError: Negative dimension size caused by subtracting 7 from 6 for 'avg_pool/AvgPool' (op: 'AvgPool') with input shapes: [?,6,6,2048].
+
+
+# Train models
+##############
+for modelname, model_config in models.items():
     print(devider)
     print("Training with model: {}".format(modelname))
 
-    model = model(n_classes=n_classes, input_width=input_width, input_height=input_height)
+    # Merge configs
+    config = default_config.copy()
+    for key, value in model_config.items():
+        config[key] = value
 
-    modelpath = modelname + "_" + time.strftime("%d_%m_%y", time.localtime()) + "/" + modelname
+    model = model(
+            n_classes=config['n_classes'],
+            input_width=config['input_width'],
+            input_height=config['input_height'])
 
     model.train(
-        train_images = train_images,
-        train_annotations = train_annotations,
-        checkpoints_path = os.path.join(checkpoints_base_path, modelpath),
-        epochs=epochs)
+            train_images=config['train_images'],
+            train_annotations=config['train_annotations'],
+            checkpoints_path=config['checkpoints_base_path'] + modelname,
+            epochs=config['epochs'])
 
     del model
