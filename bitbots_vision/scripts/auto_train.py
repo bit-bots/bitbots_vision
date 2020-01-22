@@ -11,7 +11,7 @@ devider = "~"*100
 # Default config
 ################
 default_config = {}
-default_config['epochs'] = 1  # Number of epochs
+default_config['epochs'] = 25  # Number of epochs
 default_config['n_classes'] = 2  # Number of segmentation classes
 default_config['input_width'] = 192  # Input width
 default_config['input_height'] = 192  # Input height
@@ -55,24 +55,31 @@ blacklist_models['resnet50_segnet'] = {}  # ValueError: Negative dimension size 
 
 # Train models
 ##############
-for modelname, model_config in models.items():
-    print(devider)
-    print("Training with model: {}".format(modelname))
+def train(models):
+    for modelname, model_config in models.items():
+        print(devider)
+        print("Training with model: {}".format(modelname))
 
-    # Merge configs
-    config = default_config.copy()
-    for key, value in model_config.items():
-        config[key] = value
+        # Merge configs
+        config = default_config.copy()
+        for key, value in model_config.items():
+            config[key] = value
 
-    model = model(
-            n_classes=config['n_classes'],
-            input_width=config['input_width'],
-            input_height=config['input_height'])
+        model = model(
+                n_classes=config['n_classes'],
+                input_width=config['input_width'],
+                input_height=config['input_height'])
 
-    model.train(
-            train_images=config['train_images'],
-            train_annotations=config['train_annotations'],
-            checkpoints_path=config['checkpoints_base_path'] + modelname,
-            epochs=config['epochs'])
+        model.train(
+                train_images=config['train_images'],
+                train_annotations=config['train_annotations'],
+                checkpoints_path=config['checkpoints_base_path'] + modelname,
+                epochs=config['epochs'])
 
-    del model
+        del model
+
+train(models)
+
+# Train on CPU
+os.environ['CUDA_VISIBLE_DEVICES'] = -1
+train(cpu_models)
