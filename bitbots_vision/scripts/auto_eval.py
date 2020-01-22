@@ -4,7 +4,24 @@ import os
 import cv2
 import numpy
 import yaml
+import json
+
+from keras_segmentation.models import all_models
 from keras_segmentation.predict import evaluate
+
+def model_from_checkpoint_path(checkpoints_path):
+    model_path = checkpoints_path.split(".")[0]
+    config_path = model_path + "_config.json"
+    assert (os.path.isfile(config_path), "Checkpoint not found: '{}'".format(config_path))
+
+    with open(config_path, 'r') as file:
+        model_config = json.load(file)
+    model = all_models.model_from_name[model_config['model_class']](
+        model_config['n_classes'], input_height=model_config['input_height'],
+        input_width=model_config['input_width'])
+    model.load_weights(checkpoints_path)
+    print("loaded weights ", checkpoints_path)
+    return model
 
 devider = "~"*100
 
@@ -32,9 +49,9 @@ for file_name in [file_name for file_name in os.listdir(models_dir) if os.path.i
 
     # Evaluate
     evaluations[file] = evaluate(
+            model=model_from_checkpoint_path(os.path.join(models_dir, file_name)),
             inp_images_dir=inp_images_dir,
-            annotations_dir=annotations_dir,
-            checkpoints_path=file_name)
+            annotations_dir=annotations_dir)
 
     print(evaluations[file_name])
 
