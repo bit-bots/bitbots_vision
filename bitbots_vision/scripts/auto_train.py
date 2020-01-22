@@ -65,7 +65,7 @@ def train(models):
         for key, value in model_config.items():
             config[key] = value
 
-        model = model(
+        model = all_models.model_from_name[modelname](
                 n_classes=config['n_classes'],
                 input_width=config['input_width'],
                 input_height=config['input_height'])
