@@ -16,10 +16,16 @@ evaluation_file = os.path.join(models_dir, "eval.yaml")  # Path of evaluation fi
 
 evaluations = {}
 
+if os.path.isfile(evaluation_file):  # Reload already evaluated models
+    with open(evaluation_file, 'r') as file:
+        evaluation = yaml.full_load(file)
+
 # Evaluate models
 #################
 for file_name in [file_name for file_name in os.listdir(models_dir) if os.path.isfile(os.path.join(models_dir, file_name))]:
     if ".json" in file_name:  # Filter non model files
+        continue
+    if file_name in evaluations:  # Skip already evaluated model files
         continue
     print(devider)
     print("Evaluating model: {}".format(file_name))
