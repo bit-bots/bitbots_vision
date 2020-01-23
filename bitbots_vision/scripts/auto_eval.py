@@ -29,17 +29,17 @@ inp_images_dir = "/srv/ssd_nvm/deep_field/data/eval/images/"  # Evaluation datas
 annotations_dir = "/srv/ssd_nvm/deep_field/data/eval/labels/"  # Evaluation labels
 models_dir = "/srv/ssd_nvm/deep_field/models/22_01_20/"  # Directory with models files
 
-evaluation_file = os.path.join(models_dir, "eval.yaml")  # Path of evaluation file to save
+evaluation_file = os.path.join(models_dir, ".." , "eval.yaml")  # Path of evaluation file to save
 
 evaluations = {}
 
 if os.path.isfile(evaluation_file):  # Reload already evaluated models
     with open(evaluation_file, 'r') as file:
-        evaluation = yaml.full_load(file)
+        evaluations = yaml.full_load(file)
 
 # Evaluate models
 #################
-for file_name in [file_name for file_name in os.listdir(models_dir) if os.path.isfile(os.path.join(models_dir, file_name))]:
+for file_name in sorted([file_name for file_name in os.listdir(models_dir) if os.path.isfile(os.path.join(models_dir, file_name))]):
     if ".json" in file_name:  # Filter non model files
         continue
     if file_name in evaluations:  # Skip already evaluated model files
@@ -47,11 +47,22 @@ for file_name in [file_name for file_name in os.listdir(models_dir) if os.path.i
     print(devider)
     print("Evaluating model: {}".format(file_name))
 
+    model = model_from_checkpoint_path(os.path.join(models_dir, file_name))
+
     # Evaluate
-    evaluations[file] = evaluate(
-            model=model_from_checkpoint_path(os.path.join(models_dir, file_name)),
+    evaluations[file_name] = model.evaluate_segmentation(
             inp_images_dir=inp_images_dir,
             annotations_dir=annotations_dir)
+
+    del model
+
+    print(evaluations[file_name])
+    
+    evaluations[file_name] = {
+                'class_wise_IU': list([float(i) for i in evaluations[file_name]["class_wise_IU"]]),
+                'frequency_weighted_IU': float(evaluations[file_name]["frequency_weighted_IU"]),
+                'mean_IU': float(evaluations[file_name]["mean_IU"]),
+            }
 
     print(evaluations[file_name])
 
