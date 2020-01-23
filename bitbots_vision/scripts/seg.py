@@ -1,13 +1,15 @@
 load = True
 train = not load
 
+from keras_segmentation.models import all_models 
 
-from keras_segmentation.models.fcn import fcn_8
-
-model = fcn_8(n_classes=3 ,  input_height=224, input_width=224)
+model_name = "pspnet"
+epoch = 8
+input_size = 192
+model = all_models.model_from_name[model_name](n_classes=2,  input_height=input_size, input_width=input_size)
 
 if load:
-    model.load_weights("/tmp/fcn_08_05.13")
+    model.load_weights("/srv/ssd_nvm/deep_field/models/22_01_20/" + model_name + "." + str(epoch))
 
 if train:
     model.train(
@@ -17,23 +19,32 @@ if train:
     )
 
 import cv2
+import os
 import numpy
+import time
 
-for i in range(0,1):
+path = "/srv/ssd_nvm/deep_field/data/eval/images/"
+#path = "/tmp/"
+
+for subdir, dirs, files in os.walk(path):
     #img = cv2.imread("/srv/ssd_nvm/deep_field/data/group1/637/images/frame{:04d}.png".format(i))  
-    img = cv2.imread("/tmp/maxresdefault.jpg")    
+    for file in files:
+        print(file)
+        img = cv2.imread(os.path.join(path, file))    
+    
+        if img is None:
+            continue
 
-    if img is None:
-        continue
+        start_time = time.time()
+        out = model.predict_segmentation(inp=img)
+        end_time = time.time()
+        print("Inference time: {}".format(end_time-start_time))
 
-    out = model.predict_segmentation(inp=img)
+        comb = cv2.resize(out.astype('float32') * 100, dsize=(img.shape[1], img.shape[0])).astype('uint8') 
     
-    comb = cv2.resize(out.astype('float32') * 100, dsize=(img.shape[1], img.shape[0])).astype('uint8') 
-    
-    tmp = numpy.zeros((img.shape[0], img.shape[1], 3))
-    print("Image {}".format(i))
-    tmp[:,:,2] = comb
-    
-    comp = tmp * 0.5 + img * 0.5
-    cv2.imwrite("/tmp/test{:04d}.png".format(i), comp)
+        tmp = numpy.zeros((img.shape[0], img.shape[1], 3))
+        tmp[:,:,2] = comb
+        
+        comp = tmp * 0.5 + img * 0.5
+        cv2.imwrite(os.path.join("/tmp/", file) , comp)
     
