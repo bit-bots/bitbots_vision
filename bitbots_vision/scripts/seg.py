@@ -22,16 +22,19 @@ if train:
 
 import cv2
 import os
-import numpy
+import numpy as np
 import time
 
-data_path = "/srv/ssd_nvm/deep_field/data/eval/images/"
-#data_path = "/tmp/"
+#data_path = "/home/florian/Desktop/"
+data_path = "/tmp/eval/"
+
+inference_time_array = []
 
 files = sorted([file_name for file_name in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, file_name))])
 
 for current_file in files:
-    print(current_file)
+    print("File: {}".format(current_file))
+
     img = cv2.imread(os.path.join(data_path, current_file))
 
     if img is None:
@@ -40,13 +43,26 @@ for current_file in files:
     start_time = time.time()
     out = model.predict_segmentation(inp=img)
     end_time = time.time()
-    print("Inference time: {}".format(end_time-start_time))
+
+    inference_time = end_time-start_time
+    inference_time_array.append(inference_time)
+
+    print("Inference time: {}".format(inference_time))
 
     comb = cv2.resize(out.astype('float32') * 100, dsize=(img.shape[1], img.shape[0])).astype('uint8')
 
-    tmp = numpy.zeros((img.shape[0], img.shape[1], 3))
+    tmp = np.zeros((img.shape[0], img.shape[1], 3))
     tmp[:,:,2] = comb
 
     comp = tmp * 0.5 + img * 0.5
     cv2.imwrite(os.path.join("/tmp/", current_file) , comp)
+
+    print(spacer)
+
+inference_time_array = np.array(inference_time_array[1:])
+
+mean_inference_time = np.mean(inference_time_array)
+std_inference_time= np.std(inference_time_array)
+
+print("Mean: {} | Std: {}".format(mean_inference_time, std_inference_time))
 
