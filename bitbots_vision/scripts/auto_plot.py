@@ -84,7 +84,7 @@ def get_plot(evaluation_data, models, colors):
             x=list(range(max_epochs)),
             y=[const_vision_value]*max_epochs,
             mode='lines',
-            name='bitbots_vision',
+            name='BITBOTS_VISION',
             line=dict(color='red', width=5)))
 
     fig.update_layout(
