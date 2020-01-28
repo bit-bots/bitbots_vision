@@ -88,7 +88,7 @@ def get_plot(evaluation_data, models, colors):
             line=dict(color='red', width=5)))
 
     fig.update_layout(
-            title="Genauigkeit auf Evaluations-Datensatz per Epoche",
+            title="Genauigkeit auf Evaluations-Datensatz pro Epoche",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
