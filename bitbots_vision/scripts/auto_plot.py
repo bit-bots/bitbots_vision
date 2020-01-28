@@ -88,15 +88,16 @@ def get_plot(evaluation_data, models, colors):
             line=dict(color='red', width=5)))
 
     fig.update_layout(
+            title="Genauigkeit auf Evaluations-Datensatz pro Epoche",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
                     color="#7f7f7f"),
             paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)')
+            plot_bgcolor='#e5ecf6')
 
-    fig.update_xaxes(title_text="Epoch", gridwidth=1)
-    fig.update_yaxes(title_text="Accuracy", gridwidth=1)
+    fig.update_xaxes(title_text="Epoche", gridwidth=1)
+    fig.update_yaxes(title_text="Genauigkeit", gridwidth=1)
     return fig
 
 
