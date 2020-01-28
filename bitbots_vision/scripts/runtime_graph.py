@@ -11,7 +11,7 @@ fig.add_trace(go.Bar(
     name='Laufzeit',
     x = labels,
     y = accuracy,
-    text= [round(value, 3) for value in accuracy],
+    text= ['%.3f'%round(value, 3) for value in accuracy],
     textposition='outside',
     error_y=dict(type='data', array=std)
 ))
@@ -20,7 +20,6 @@ fig.update_layout(barmode='group')
 
 fig.update_layout(
     title="Laufzeit per Bild auf Intel Core i7-4810MQ CPU @ 2.80GHz",
-    xaxis_title="Modelname",
     yaxis_title="Laufzeit in s",
     font=dict(
         family="Courier New, monospace",
