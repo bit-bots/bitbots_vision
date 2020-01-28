@@ -8,6 +8,8 @@ epoch = 8
 input_size = 192
 model_folder = "/srv/ssd_nvm/deep_field/models/22_01_20/"
 
+spacer = "~"*100
+
 model = all_models.model_from_name[model_name](n_classes=2,  input_height=input_size, input_width=input_size)
 
 if load:
