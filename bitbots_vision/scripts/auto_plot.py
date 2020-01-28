@@ -25,15 +25,17 @@ main_models = [
         'fcn_32',
         'fcn_32_vgg',
         'fcn_32_mobilenet',
-        'mobilenet_unet',
-        'vgg_unet',
-        'unet_mini',
+
         'unet',
+        'unet_mini',
         'segnet',
+        'pspnet',
+
+        'mobilenet_unet',
         'mobilenet_segnet',
+        'vgg_unet',
         'vgg_segnet',
         'vgg_pspnet',
-        'pspnet'
         ]
 
 selected_models = [
@@ -78,7 +80,7 @@ def get_plot(evaluation_data, models, colors):
             y=[datapoint[select_data] for datapoint in data],
             mode='lines',
             name=model.upper(),
-            line=dict(width=3, color=colors[model.__hash__() % len(evaluation_data)])))
+            line=dict(width=3, color=colors[main_models.index(model)])))
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
@@ -105,7 +107,7 @@ def get_plot(evaluation_data, models, colors):
 with open(evaluation_file, 'r') as file:
     evaluation_data = yaml.full_load(file)
 
-colors = get_N_HexCol(len(evaluation_data))
+colors = get_N_HexCol(len(main_models))
 
 # Create plot with all models
 main_fig = get_plot(evaluation_data, main_models, colors)
