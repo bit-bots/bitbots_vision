@@ -26,8 +26,8 @@ main_models = [
         'fcn_32_vgg',
         'fcn_32_mobilenet',
 
-        'unet',
         'unet_mini',
+        'unet',
         'segnet',
         'pspnet',
 
