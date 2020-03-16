@@ -3,9 +3,10 @@ train = not load
 
 from keras_segmentation.models import all_models 
 
-model_name = "pspnet"
-epoch = 8
-input_size = 192
+model_name = "mobilenet_segnet"
+epoch = 14
+input_size = 224
+
 model = all_models.model_from_name[model_name](n_classes=2,  input_height=input_size, input_width=input_size)
 
 if load:
@@ -15,7 +16,10 @@ if train:
     model.train(
         train_images =  "/srv/ssd_nvm/deep_field/data/group_all/images/",
         train_annotations = "/srv/ssd_nvm/deep_field/data/group_all/labels/",
-        checkpoints_path = "/tmp/fcn_08_05" , epochs=15
+        checkpoints_path = "/tmp/fcn_08_05", 
+        epochs=15, 
+        do_augment=True,
+        augmentation_name="aug_all2",
     )
 
 import cv2
