@@ -138,10 +138,9 @@ class Vision:
         :param config: New _config
         :param level: The level is a definable int in the Vision.cfg file. All changed params are or ed together by dynamic reconfigure.
         """
-        if not rospy.is_shutdown():
-            with self._transfer_reconfigure_data_mutex:
-                # Set data
-                self._transfer_reconfigure_data = (config, level)
+        with self._transfer_reconfigure_data_mutex:
+            # Set data
+            self._transfer_reconfigure_data = (config, level)
 
         return config
 
@@ -432,10 +431,11 @@ class Vision:
                           logger_throttle=2, logger_name="")
             return
 
-        if not rospy.is_shutdown():
-            with self._transfer_image_msg_mutex:
-                # Transfer the image to the main thread
-                self._transfer_image_msg = image_msg
+        if self._transfer_image_msg_mutex.locked():
+            return
+
+        # Transfer the image to the main thread
+        self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         """

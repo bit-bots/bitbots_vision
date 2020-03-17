@@ -195,10 +195,10 @@ class DynamicColorSpace:
                           logger_throttle=2, logger_name="dynamic_color_space")
             return
 
-        if not rospy.is_shutdown():
-            with self._transfer_image_msg_mutex:
-                # Transfer the image to the main thread
-                self._transfer_image_msg = image_msg
+        if self._transfer_image_msg_mutex.locked():
+            return
+        # Transfer the image to the main thread
+        self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         # type: (Image) -> None
