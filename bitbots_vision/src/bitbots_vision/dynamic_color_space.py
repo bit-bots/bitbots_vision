@@ -4,7 +4,10 @@ import cv2
 import yaml
 import rospy
 import rospkg
+import time
 import numpy as np
+from copy import deepcopy
+from threading import Lock
 from cv_bridge import CvBridge
 from collections import deque
 from sensor_msgs.msg import Image
@@ -60,16 +63,59 @@ class DynamicColorSpace:
             queue_size=1,
             tcp_nodelay=True)
 
-        rospy.spin()
+        # Reconfigure dict transfer variable
+        self._transfer_reconfigure_data = None
+        self._transfer_reconfigure_data_mutex = Lock()
+
+        # Image transfer variable
+        self._transfer_image_msg = None
+        self._transfer_image_msg_mutex = Lock()
+
+        # Run the dynamic color space main loop
+        self._main_loop()
+
+    def _main_loop(self):
+        """
+        Main loop that processes the images and configuration changes
+        """
+        while not rospy.is_shutdown():
+            # Lookup if there is another configuration available
+            if self._transfer_reconfigure_data is not None:
+                # Copy _config from shared memory
+                with self._transfer_reconfigure_data_mutex:
+                    reconfigure_data = deepcopy(self._transfer_reconfigure_data)
+                    self._transfer_reconfigure_data = None
+                # Run vision reconfiguration
+                self._reconfigure(reconfigure_data)
+            # Check if a new image is avalabile
+            elif self._transfer_image_msg is not None:
+                # Copy image from shared memory
+                with self._transfer_image_msg_mutex:
+                    image_msg = deepcopy(self._transfer_image_msg)
+                    self._transfer_image_msg = None
+                # Run the vision pipeline
+                self._handle_image(image_msg)
+                # Now the first image has been processed
+                self._first_image_callback = False
+            else:
+                time.sleep(0.01)
 
     def _vision_config_callback(self, msg):
         # type: (Config) -> None
         """
         This method is called by the 'vision_config'-message subscriber.
-        Load and update vision config.
-        Handle config changes.
+        
+        :param Config msg: new 'vision_config'-message subscriber
+        :return: None
+        """
+        if not rospy.is_shutdown():
+            with self._transfer_reconfigure_data_mutex:
+                # Set data
+                self._transfer_reconfigure_data = msg
 
-        This callback is delayed (about 30 seconds) after changes through dynamic reconfigure
+    def _reconfigure(self, msg):
+        """
+        Handle reconfiguration.
 
         :param Config msg: new 'vision_config'-message subscriber
         :return: None
@@ -142,14 +188,18 @@ class DynamicColorSpace:
                 not self._vision_config['dynamic_color_space_active']:
             return
 
-        # Drops old images
+        # Drops old images and cleans up the queue.
+        # Still accepts very old images, that are most likely from ROS bags.
         image_age = rospy.get_rostime() - image_msg.header.stamp
         if 1.0 < image_age.to_sec() < 1000.0:
             rospy.logwarn('Vision: Dropped incoming Image-message, because its too old! ({} sec)'.format(image_age.to_sec()),
                           logger_throttle=2, logger_name="dynamic_color_space")
             return
 
-        self._handle_image(image_msg)
+        if not rospy.is_shutdown():
+            with self._transfer_image_msg_mutex:
+                # Transfer the image to the main thread
+                self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         # type: (Image) -> None
