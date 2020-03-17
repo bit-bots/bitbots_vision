@@ -108,10 +108,9 @@ class DynamicColorSpace:
         :param Config msg: new 'vision_config'-message subscriber
         :return: None
         """
-        if not rospy.is_shutdown():
-            with self._transfer_reconfigure_data_mutex:
-                # Set data
-                self._transfer_reconfigure_data = msg
+        with self._transfer_reconfigure_data_mutex:
+            # Set data
+            self._transfer_reconfigure_data = msg
 
     def _reconfigure(self, msg):
         """
