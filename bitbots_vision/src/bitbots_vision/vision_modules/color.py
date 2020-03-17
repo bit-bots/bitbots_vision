@@ -6,6 +6,8 @@ import rospy
 import VisionExtensions
 import numpy as np
 import os
+from copy import deepcopy
+from threading import Lock
 from cv_bridge import CvBridge
 from bitbots_vision.vision_modules import ros_utils
 
@@ -370,13 +372,12 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         # Initialization of parent PixelListColorDetector.
         super(DynamicPixelListColorDetector, self).__init__(config, package_path)
 
-        # Annotate global variable. The global is needed due to threading issues
-        global _dyn_color_space
-        _dyn_color_space = np.copy(self._color_space)
+        # Color space transfer variable
+        self._transfer_color_space_data = None
+        self._transfer_color_space_data_mutex = Lock()
 
-        # Annotate global variable. The global is needed due to threading issues
-        global _base_color_space
-        _base_color_space = np.copy(self._color_space)
+        self._base_color_space = np.copy(self._color_space)
+        self._dyn_color_space = np.copy(self._color_space)
 
     def set_image(self, image):
         # type: (np.array) -> None
@@ -399,14 +400,12 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         :param np.array optional_image: Optional input image
         :return np.array: masked image
         """
-        global _base_color_space
-
         if optional_image is not None:
             # Mask of optional image
-            mask = self._mask_image(optional_image, _base_color_space)
+            mask = self._mask_image(optional_image, self._base_color_space)
         else:
             # Mask of default cached image
-            mask = self._mask = self._mask_image(self._image, _base_color_space)
+            mask = self._mask = self._mask_image(self._image, self._base_color_space)
 
         return mask
 
@@ -421,8 +420,19 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         :return np.array: masked image
         """
         if color_space is None:
-            global _dyn_color_space
-            color_space = _dyn_color_space
+            # Lookup if there is another color space available
+            if self._transfer_color_space_data is not None:
+                # Copy data from shared memory
+                with self._transfer_color_space_data_mutex:
+                    data = deepcopy(self._transfer_color_space_data)
+                    self._transfer_color_space_data = None
+                # Decode color space message
+                self._decode_color_space(data)
+
+            color_space = self._dyn_color_space
+
+        print(f"BASE: {len(self._base_color_space)}")
+        print(f"DYN:  {len(self._dyn_color_space)}")
 
         return VisionExtensions.maskImg(image, color_space)
 
@@ -434,7 +444,9 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         :param ColorSpaceMessage msg: ColorSpaceMessage
         :return: None
         """
-        self._decode_color_space(msg)
+        with self._transfer_color_space_data_mutex:
+            # Set data
+            self._transfer_color_space_data = msg
 
     def _decode_color_space(self, msg):
         # type: (ColorSpaceMessage) -> None
@@ -446,8 +458,7 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         """
         # Create temporary color space
         # Use the base color space as basis
-        global _base_color_space
-        color_space_temp = np.copy(_base_color_space)
+        color_space_temp = np.copy(self._base_color_space)
 
         # Adds new colors to that color space
         color_space_temp[
@@ -456,5 +467,4 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
             msg.red] = 1
 
         # Switches the reference to the new color space
-        global _dyn_color_space
-        _dyn_color_space = color_space_temp
+        self._dyn_color_space = color_space_temp

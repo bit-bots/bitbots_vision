@@ -84,7 +84,6 @@ class Vision:
         # Needed for operations that should only be executed on the first image
         self._first_image_callback = True
 
-
         # Reconfigure dict transfer variable
         self._transfer_reconfigure_data = None
         self._transfer_reconfigure_data_mutex = Lock()
