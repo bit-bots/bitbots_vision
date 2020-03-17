@@ -4,9 +4,9 @@ import os
 import cv2
 import rospy
 import rospkg
-import threading
 import time
 from copy import deepcopy
+from threading import Thread, Lock
 from cv_bridge import CvBridge
 from dynamic_reconfigure.server import Server
 from sensor_msgs.msg import Image
@@ -84,13 +84,14 @@ class Vision:
         # Needed for operations that should only be executed on the first image
         self._first_image_callback = True
 
+
         # Reconfigure dict transfer variable
         self._transfer_reconfigure_data = None
-        self._transfer_reconfigure_data_read_flag = False
+        self._transfer_reconfigure_data_mutex = Lock()
 
         # Image transfer variable
         self._transfer_image_msg = None
-        self._transfer_image_msg_read_flag = False
+        self._transfer_image_msg_mutex = Lock()
 
         # Add model enums to _config
         ros_utils.add_model_enums(VisionConfig, self._package_path)
@@ -113,19 +114,17 @@ class Vision:
             # Lookup if there is another configuration available
             if self._transfer_reconfigure_data is not None:
                 # Copy _config from shared memory
-                self._transfer_reconfigure_data_read_flag = True
-                reconfigure_data = deepcopy(self._transfer_reconfigure_data)
-                self._transfer_reconfigure_data_read_flag = False
-                self._transfer_reconfigure_data = None
+                with self._transfer_reconfigure_data_mutex:
+                    reconfigure_data = deepcopy(self._transfer_reconfigure_data)
+                    self._transfer_reconfigure_data = None
                 # Run vision reconfiguration
                 self._configure_vision(*reconfigure_data)
             # Check if a new image is avalabile
             elif self._transfer_image_msg is not None:
                 # Copy image from shared memory
-                self._transfer_image_msg_read_flag = True
-                image_msg = deepcopy(self._transfer_image_msg)
-                self._transfer_image_msg_read_flag = False
-                self._transfer_image_msg = None
+                with self._transfer_image_msg_mutex:
+                    image_msg = deepcopy(self._transfer_image_msg)
+                    self._transfer_image_msg = None
                 # Run the vision pipeline
                 self._handle_image(image_msg)
                 # Now the first image has been processed
@@ -140,14 +139,12 @@ class Vision:
         :param config: New _config
         :param level: The level is a definable int in the Vision.cfg file. All changed params are or ed together by dynamic reconfigure.
         """
-        # Check flag
-        while self._transfer_reconfigure_data_read_flag and not rospy.is_shutdown():
-            time.sleep(0.01)
-        # Set data
-        self._transfer_reconfigure_data = (config, level)
+        if not rospy.is_shutdown():
+            with self._transfer_reconfigure_data_mutex:
+                # Set data
+                self._transfer_reconfigure_data = (config, level)
 
         return config
-
 
     def _configure_vision(self, config, level):
         """
@@ -428,19 +425,18 @@ class Vision:
         Sometimes the queue gets to large, even when the size is limited to 1.
         That's, why we drop old images manually.
         """
-        # drops old images and cleans up queue. Still accepts very old images, that are most likely from ros bags.
+        # Drops old images and cleans up the queue.
+        # Still accepts very old images, that are most likely from ROS bags.
         image_age = rospy.get_rostime() - image_msg.header.stamp
         if 1.0 < image_age.to_sec() < 1000.0:
             rospy.logwarn('Vision: Dropped incoming Image-message, because its too old! ({} sec)'.format(image_age.to_sec()),
                           logger_throttle=2, logger_name="")
             return
 
-        # Check flag
-        if self._transfer_image_msg_read_flag:
-            return
-
-        # Transfer the image to the main thread
-        self._transfer_image_msg = image_msg
+        if not rospy.is_shutdown():
+            with self._transfer_image_msg_mutex:
+                # Transfer the image to the main thread
+                self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         """
@@ -486,9 +482,9 @@ class Vision:
         # Check if the vision should run the conventional and neural net part parallel
         if self._config['vision_parallelize']:
             # Create and start threads for conventional calculation and neural net
-            fcnn_thread = threading.Thread(target=self._ball_detector.compute)
+            fcnn_thread = Thread(target=self._ball_detector.compute)
 
-            conventional_thread = threading.Thread(target=self._conventional_precalculation())
+            conventional_thread = Thread(target=self._conventional_precalculation())
 
             conventional_thread.start()
             fcnn_thread.start()
