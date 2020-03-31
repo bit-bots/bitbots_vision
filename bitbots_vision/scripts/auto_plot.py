@@ -13,7 +13,7 @@ import plotly.graph_objs as go
 
 const_vision_value = 0.925
 evaluation_file = "/home/jan/eval.yaml"
-max_epochs = 25
+max_epochs = 60
 select_data = "mean_IU"
 main_plot_filename = "/tmp/accuracy_plot"
 selected_plot_filename = "/tmp/accuracy_sel_plot"
@@ -50,6 +50,7 @@ encoders = [
     "mobilenet",
     "vgg",
     "vanilla",
+    "resnet50",
 ]
 
 decoders = [
@@ -57,7 +58,7 @@ decoders = [
     "fcn_32",
     "unet",
     "segnet",
-    "pspnet"
+    "pspnet",
 ]
 
 selected_models = [
@@ -141,13 +142,11 @@ def get_bar_plot(evaluation_data, models, colors):
         model_names.append(model.upper())
         models_data.append([evaluation_data["{}.{}".format(model, i)][select_data] for i in range(max_epochs)])
 
-    print(models_data)
-
     # Plot evaluation data
     fig = go.Figure(data=[go.Bar(
             x=model_names,
             y=data,
-            text=model_names,
+            text=data,
             textposition='auto',
             marker_color=colors,
             error_y=dict(type='data', array=models_data),
