@@ -19,7 +19,10 @@ if train:
     model.train(
         train_images =  "/srv/ssd_nvm/deep_field/data/group_all/images/",
         train_annotations = "/srv/ssd_nvm/deep_field/data/group_all/labels/",
-        checkpoints_path = "/tmp/fcn_08_05" , epochs=15
+        checkpoints_path = "/tmp/fcn_08_05", 
+        epochs=15, 
+        do_augment=True,
+        augmentation_name="aug_all2",
     )
 
 import cv2

@@ -23,13 +23,13 @@ def model_from_checkpoint_path(checkpoints_path):
     print("loaded weights ", checkpoints_path)
     return model
 
-devider = "~"*100
+devider = "~"*150
 
 inp_images_dir = "/srv/ssd_nvm/deep_field/data/eval/images/"  # Evaluation dataset
 annotations_dir = "/srv/ssd_nvm/deep_field/data/eval/labels/"  # Evaluation labels
-models_dir = "/srv/ssd_nvm/deep_field/models/22_01_20/"  # Directory with models files
+models_dir = "/srv/ssd_nvm/deep_field/models/24_03_20/"  # Directory with models files
 
-evaluation_file = os.path.join(models_dir, ".." , "eval.yaml")  # Path of evaluation file to save
+evaluation_file = os.path.join(models_dir, ".." , "eval_24_03_20.yaml")  # Path of evaluation file to save
 
 evaluations = {}
 
@@ -42,18 +42,20 @@ if os.path.isfile(evaluation_file):  # Reload already evaluated models
 for file_name in sorted([file_name for file_name in os.listdir(models_dir) if os.path.isfile(os.path.join(models_dir, file_name))]):
     if ".json" in file_name:  # Filter non model files
         continue
-    if file_name in evaluations:  # Skip already evaluated model files
+    if evaluations is not None and file_name in evaluations:  # Skip already evaluated model files
         continue
     print(devider)
     print("Evaluating model: {}".format(file_name))
 
     model = model_from_checkpoint_path(os.path.join(models_dir, file_name))
+    
+    if evaluations == None:
+        evaluations = {}  # TODO: Fix hack
 
     # Evaluate
     evaluations[file_name] = model.evaluate_segmentation(
             inp_images_dir=inp_images_dir,
             annotations_dir=annotations_dir)
-
     del model
 
     print(evaluations[file_name])
