@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 import yaml
+import statistics
 import colorsys
 import plotly.offline as py
 import plotly.graph_objs as go
@@ -12,7 +13,8 @@ import plotly.graph_objs as go
 ########
 
 const_vision_value = 0.925
-evaluation_file = "/home/jan/eval.yaml"
+const_vision_color = 'red'
+accuracy_evaluation_file = "/home/jan/eval.yaml"
 max_epochs = 60
 select_data = "mean_IU"
 main_plot_filename = "/tmp/accuracy_plot"
@@ -117,7 +119,7 @@ def get_line_plot(evaluation_data, models, colors):
             y=[const_vision_value]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
-            line=dict(color='red', width=5)))
+            line=dict(color=const_vision_color, width=5)))
 
     fig.update_layout(
             title="Accuracy on evaluation dataset per epoch",
@@ -134,32 +136,43 @@ def get_line_plot(evaluation_data, models, colors):
 
 def get_bar_plot(evaluation_data, models, colors):
     # Extract model-specific data
-    data = [const_vision_value]
-    model_names = ['BITBOTS_VISION']
-    models_data = [[const_vision_value]]
+    models_data = {}
     for model in models:
-        data.append(max([evaluation_data["{}.{}".format(model, i)][select_data] for i in range(max_epochs)]))
-        model_names.append(model.upper())
-        models_data.append([evaluation_data["{}.{}".format(model, i)][select_data] for i in range(max_epochs)])
+        models_data[model] = [evaluation_data["{}.{}".format(model, i)][select_data] for i in range(max_epochs)]
+
+    fig = go.Figure()
+
+    # Plot vision data
+    fig.add_bar(
+        x=['BITBOTS_VISION'],
+        y=[const_vision_value],
+        text=['%.3f'%round(const_vision_value, 3)],
+        marker_color=[const_vision_color],
+        textposition='auto',
+    )
 
     # Plot evaluation data
-    fig = go.Figure(data=[go.Bar(
-            x=model_names,
-            y=data,
-            text=data,
+    for model, data in models_data.items():
+        datapoint = statistics.mean(data)  # mean
+        datapoint = max(data)  # max
+        fig.add_bar(
+            x=[model.upper()],
+            y=[datapoint],
+            text=['%.3f'%round(datapoint, 3)],
+            marker_color=[colors[main_models.index(model)]],
             textposition='auto',
-            marker_color=colors,
-            error_y=dict(type='data', array=models_data),
-        )])
+            error_y=dict(type='constant', value=statistics.stdev(data)),
+        )
 
     fig.update_layout(
-            title="Max Accuracy on evaluation dataset per model",
+            title="Maximum accuracy on evaluation dataset per model",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
                     color="#7f7f7f"),
             paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='#e5ecf6')
+            plot_bgcolor='#e5ecf6',
+            showlegend=False)
 
     fig.update_xaxes(title_text="Model", gridwidth=1)
     fig.update_yaxes(title_text="Accuracy", gridwidth=1)
@@ -209,10 +222,10 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
             y=[const_vision_value]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
-            line=dict(color='red', width=5)))
+            line=dict(color=const_vision_color, width=5)))
 
     fig.update_layout(
-            title="Genauigkeit auf Evaluations-Datensatz pro Epoche",
+            title="Accuracy on evaluation dataset per epoch",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -220,37 +233,35 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='#e5ecf6')
 
-    fig.update_xaxes(title_text="Epoche", gridwidth=1)
-    fig.update_yaxes(title_text="Genauigkeit", gridwidth=1)
+    fig.update_xaxes(title_text="Epoch", gridwidth=1)
+    fig.update_yaxes(title_text="Accuracy", gridwidth=1)
     return fig
 
-# Load evaluation data
-with open(evaluation_file, 'r') as file:
-    evaluation_data = yaml.full_load(file)
-
-colors = get_N_HexCol(len(main_models)+1)
+# Load accuracy evaluation data
+with open(accuracy_evaluation_file, 'r') as file:
+    accuracy_evaluation_data = yaml.full_load(file)
 
 # Create plot with all models
-main_fig = get_line_plot(evaluation_data, main_models, colors)
+main_fig = get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
 #main_fig.write_image(main_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(main_fig, filename=main_plot_filename + ".html", auto_open=True)  # Show HTML
 
 # Create plot with selected models
-selected_fig = get_line_plot(evaluation_data, selected_models, colors)
+selected_fig = get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models)))
 #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(selected_fig, filename=selected_plot_filename + ".html", auto_open=True)  # Show HTML
 
 # Create plot for each encoder
-encoder_fig = get_subnet_plot(evaluation_data, encoders, main_models, colors)
+encoder_fig = get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders)))
 #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(encoder_fig, filename=encoder_plot_filename + ".html", auto_open=True)  # Show HTML
 
 # Create plot for each encoder
-decoder_fig = get_subnet_plot(evaluation_data, decoders, main_models, colors)
+decoder_fig = get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders)))
 #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(decoder_fig, filename=decoder_plot_filename + ".html", auto_open=True)  # Show HTML
 
 # Create bar plot with all models
-max_fig = get_bar_plot(evaluation_data, main_models, colors)
+max_fig = get_bar_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)+1))
 # max_fig.write_image(max_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(max_fig, filename=max_plot_filename + ".html", auto_open=True)  # Show HTML
