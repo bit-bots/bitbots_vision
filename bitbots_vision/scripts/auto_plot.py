@@ -24,11 +24,11 @@ encoder_plot_filename = "/tmp/encoder_plot"
 decoder_plot_filename = "/tmp/decoder_plot"
 
 timing_evaluation_file = "/home/jan/timing_eval_nuc5.yaml"
-timing_plot_filename = "/tmp/decoder_plot"
+timing_plot_filename = "/tmp/timing_plot"
 const_vision_timing = 0.011721170167156267
 const_vision_timing_std_dev = 0.0021944406596045426
 
-performance_plot_filename = "/tmp/decoder_plot"
+performance_plot_filename = "/tmp/performance_plot"
 
 main_models = [
     "fcn_8",
