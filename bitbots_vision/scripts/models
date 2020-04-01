@@ -9,8 +9,6 @@ fcn_32_mobilenet
 pspnet
 vgg_pspnet
 resnet50_pspnet
-vgg_pspnet
-resnet50_pspnet
 pspnet_50
 pspnet_101
 mobilenet_pspnet
