@@ -12,9 +12,9 @@ import plotly.graph_objs as go
 # Config
 ########
 
-const_vision_value = 0.925
+const_vision_accuracy = 0.925
 const_vision_color = 'red'
-accuracy_evaluation_file = "/home/jan/eval.yaml"
+accuracy_evaluation_file = "/home/jan/accuracy_eval.yaml"
 max_epochs = 60
 select_data = "mean_IU"
 main_plot_filename = "/tmp/accuracy_plot"
@@ -22,6 +22,11 @@ selected_plot_filename = "/tmp/accuracy_sel_plot"
 max_plot_filename = "/home/jan/max_accuracy_plot"
 encoder_plot_filename = "/tmp/encoder_plot"
 decoder_plot_filename = "/tmp/decoder_plot"
+
+timing_evaluation_file = "/home/jan/timing_eval_nuc5.yaml"
+timing_plot_filename = "/tmp/decoder_plot"
+const_vision_timing = 0.011721170167156267
+const_vision_timing_std_dev = 0.0021944406596045426
 
 main_models = [
     "fcn_8",
@@ -116,7 +121,7 @@ def get_line_plot(evaluation_data, models, colors):
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
-            y=[const_vision_value]*max_epochs,
+            y=[const_vision_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
             line=dict(color=const_vision_color, width=5)))
@@ -145,8 +150,8 @@ def get_bar_plot(evaluation_data, models, colors):
     # Plot vision data
     fig.add_bar(
         x=['BITBOTS_VISION'],
-        y=[const_vision_value],
-        text=['%.3f'%round(const_vision_value, 3)],
+        y=[const_vision_accuracy],
+        text=['%.3f'%round(const_vision_accuracy, 3)],
         marker_color=[const_vision_color],
         textposition='auto',
     )
@@ -219,7 +224,7 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
-            y=[const_vision_value]*max_epochs,
+            y=[const_vision_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
             line=dict(color=const_vision_color, width=5)))
@@ -237,31 +242,79 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
     fig.update_yaxes(title_text="Accuracy", gridwidth=1)
     return fig
 
+def get_timing_plot(evaluation_data, models, colors):
+    fig = go.Figure()
+
+    # Plot vision data
+    fig.add_bar(
+        x=['BITBOTS_VISION'],
+        y=[const_vision_timing],
+        text=['%.3f'%round(const_vision_timing, 3)],
+        marker_color=[const_vision_color],
+        textposition='auto',
+        error_y=dict(type='constant', value=const_vision_timing_std_dev),
+    )
+
+    # Plot evaluation data
+    for model, data in evaluation_data.items():
+        fig.add_bar(
+            x=[model.upper()],
+            y=[data['mean']],
+            text=['%.3f'%round(data['mean'], 3)],
+            marker_color=[colors[main_models.index(model)]],
+            textposition='auto',
+            error_y=dict(type='constant', value=data['std']),
+        )
+
+    fig.update_layout(
+            title="Mean inference time per model",
+            font=dict(
+                    family="Courier New, monospace",
+                    size=25,
+                    color="#7f7f7f"),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='#e5ecf6',
+            showlegend=False)
+
+    fig.update_xaxes(title_text="Model", gridwidth=1)
+    fig.update_yaxes(title_text="Time [s]", gridwidth=1)
+    return fig
+
+
 # Load accuracy evaluation data
 with open(accuracy_evaluation_file, 'r') as file:
     accuracy_evaluation_data = yaml.full_load(file)
 
-# Create plot with all models
-main_fig = get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
-#main_fig.write_image(main_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(main_fig, filename=main_plot_filename + ".html", auto_open=True)  # Show HTML
+# Load timing evaluation data
+with open(timing_evaluation_file, 'r') as file:
+    timing_evaluation_data = yaml.full_load(file)
 
-# Create plot with selected models
-selected_fig = get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models)))
-#selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(selected_fig, filename=selected_plot_filename + ".html", auto_open=True)  # Show HTML
+# # Create plot with all models
+# main_fig = get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
+# #main_fig.write_image(main_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+# py.plot(main_fig, filename=main_plot_filename + ".html", auto_open=True)  # Show HTML
 
-# Create plot for each encoder
-encoder_fig = get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders)))
-#selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(encoder_fig, filename=encoder_plot_filename + ".html", auto_open=True)  # Show HTML
+# # Create plot with selected models
+# selected_fig = get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models)))
+# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+# py.plot(selected_fig, filename=selected_plot_filename + ".html", auto_open=True)  # Show HTML
 
-# Create plot for each encoder
-decoder_fig = get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders)))
-#selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(decoder_fig, filename=decoder_plot_filename + ".html", auto_open=True)  # Show HTML
+# # Create plot for each encoder
+# encoder_fig = get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders)))
+# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+# py.plot(encoder_fig, filename=encoder_plot_filename + ".html", auto_open=True)  # Show HTML
 
-# Create bar plot with all models
-max_fig = get_bar_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)+1))
-# max_fig.write_image(max_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(max_fig, filename=max_plot_filename + ".html", auto_open=True)  # Show HTML
+# # Create plot for each encoder
+# decoder_fig = get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders)))
+# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+# py.plot(decoder_fig, filename=decoder_plot_filename + ".html", auto_open=True)  # Show HTML
+
+# # Create bar plot with all models
+# max_fig = get_bar_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
+# # max_fig.write_image(max_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+# py.plot(max_fig, filename=max_plot_filename + ".html", auto_open=True)  # Show HTML
+
+# Create timing bar plot with all models
+timing_fig = get_timing_plot(timing_evaluation_data, main_models, get_N_HexCol(len(main_models)))
+# timing_fig.write_image(timing_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+py.plot(timing_fig, filename=timing_plot_filename + ".html", auto_open=True)  # Show HTML
