@@ -17,9 +17,10 @@ const_vision_color = 'red'
 accuracy_evaluation_file = "/home/jan/accuracy_eval.yaml"
 max_epochs = 60
 select_data = "mean_IU"
+percentile_rank = 70
 main_plot_filename = "/tmp/accuracy_plot"
 selected_plot_filename = "/tmp/accuracy_sel_plot"
-max_plot_filename = "/home/jan/max_accuracy_plot"
+mean_acc_plot_filename = "/tmp/mean_accuracy_plot"
 encoder_plot_filename = "/tmp/encoder_plot"
 decoder_plot_filename = "/tmp/decoder_plot"
 
@@ -71,26 +72,26 @@ decoders = [
 ]
 
 selected_models = [
-    "fcn_8",
-    "fcn_32",
-    "fcn_8_vgg",
-    "fcn_32_vgg",
+    # "fcn_8",
+    # "fcn_32",
+    # "fcn_8_vgg",
+    # "fcn_32_vgg",
     "fcn_8_resnet50",
     "fcn_32_resnet50",
     "fcn_8_mobilenet",
     "fcn_32_mobilenet",
-    "pspnet",
+    # "pspnet",
     # "vgg_pspnet",
-    "resnet50_pspnet",
+    # "resnet50_pspnet",
     # "pspnet_50",
     # "pspnet_101",
-    "unet_mini",
-    "unet",
-    "vgg_unet",
+    # "unet_mini",
+    # "unet",
+    # "vgg_unet",
     "resnet50_unet",
     "mobilenet_unet",
-    "segnet",
-    "vgg_segnet",
+    # "segnet",
+    # "vgg_segnet",
     "resnet50_segnet",
     "mobilenet_segnet",
     ]
@@ -129,7 +130,6 @@ def get_line_plot(evaluation_data, models, colors):
             line=dict(color=const_vision_color, width=5)))
 
     fig.update_layout(
-            title="Accuracy on evaluation dataset per epoch",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -160,19 +160,20 @@ def get_bar_plot(evaluation_data, models, colors):
 
     # Plot evaluation data
     for model, data in models_data.items():
-        datapoint = statistics.mean(data)  # mean
-        datapoint = max(data)  # max
+        percentile = sorted(data)[-(int(((100-percentile_rank)/100)*len(data))):]
+        datapoint = statistics.mean(percentile)  # mean of percentile
+        # datapoint = statistics.mean(data)  # mean
         fig.add_bar(
             x=[model.upper()],
             y=[datapoint],
             text=['%.3f'%round(datapoint, 3)],
             marker_color=[colors[main_models.index(model)]],
             textposition='auto',
-            error_y=dict(type='constant', value=statistics.stdev(data)),
+            error_y=dict(type='constant', value=statistics.stdev(percentile)),
+            # error_y=dict(type='constant', value=statistics.stdev(data)),
         )
 
     fig.update_layout(
-            title="Maximum accuracy on evaluation dataset per model",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -182,7 +183,7 @@ def get_bar_plot(evaluation_data, models, colors):
             showlegend=False)
 
     fig.update_xaxes(title_text="Model", gridwidth=1)
-    fig.update_yaxes(title_text="Accuracy", gridwidth=1)
+    fig.update_yaxes(title_text="Mean accuracy", gridwidth=1)
     return fig
 
 def get_subnet_plot(evaluation_data, subnets, models, colors):
@@ -232,7 +233,6 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
             line=dict(color=const_vision_color, width=5)))
 
     fig.update_layout(
-            title="Accuracy on evaluation dataset per epoch",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -269,7 +269,6 @@ def get_timing_plot(evaluation_data, models, colors):
         )
 
     fig.update_layout(
-            title="Mean inference time per model",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -301,7 +300,8 @@ def get_performance_plot(accuracy_data, timing_data, models, colors):
 
     # Plot evaluation data
     for model, data in models_data.items():
-        datapoint = statistics.mean(data) / timing_evaluation_data[model]['mean']
+        percentile = sorted(data)[-(int(((100-percentile_rank)/100)*len(data))):]
+        datapoint = statistics.mean(percentile) / timing_evaluation_data[model]['mean']  # mean of percentile per time
         fig.add_bar(
             x=[model.upper()],
             y=[datapoint],
@@ -311,7 +311,6 @@ def get_performance_plot(accuracy_data, timing_data, models, colors):
         )
 
     fig.update_layout(
-            title="Performance on evaluation dataset per model on an Intel NUC",
             font=dict(
                     family="Courier New, monospace",
                     size=25,
@@ -353,10 +352,10 @@ decoder_fig = get_subnet_plot(accuracy_evaluation_data, decoders, main_models, g
 #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
 py.plot(decoder_fig, filename=decoder_plot_filename + ".html", auto_open=True)  # Show HTML
 
-# Create bar plot with all models
-max_fig = get_bar_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
-# max_fig.write_image(max_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-py.plot(max_fig, filename=max_plot_filename + ".html", auto_open=True)  # Show HTML
+# Create bar plot with mean accuracy of percentile of all models
+mean_acc_fig = get_bar_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
+# mean_acc_fig.write_image(mean_acc_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
+py.plot(mean_acc_fig, filename=mean_acc_plot_filename + ".html", auto_open=True)  # Show HTML
 
 # Create timing bar plot with all models
 timing_fig = get_timing_plot(timing_evaluation_data, main_models, get_N_HexCol(len(main_models)))
