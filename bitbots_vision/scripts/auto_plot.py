@@ -12,6 +12,7 @@ import plotly.graph_objs as go
 # Config
 ########
 
+PDF = False
 const_vision_accuracy = 0.925
 accuracy_evaluation_file = "/home/jan/accuracy_eval.yaml"
 max_epochs = 60
@@ -22,6 +23,7 @@ selected_plot_filename = "/tmp/accuracy_sel_plot"
 mean_acc_plot_filename = "/tmp/mean_accuracy_plot"
 encoder_plot_filename = "/tmp/encoder_plot"
 decoder_plot_filename = "/tmp/decoder_plot"
+encoder_decoder_plot_filename = "/tmp/encoder_decoder_plot"
 
 timing_evaluation_file = "/home/jan/timing_eval_nuc5.yaml"
 timing_plot_filename = "/tmp/timing_plot"
@@ -87,6 +89,17 @@ performant_models = [
     "mobilenet_segnet",
     ]
 
+background_color = 'rgba(0,0,0,0)'
+vision_color = '#F67280'
+main_color = '#083358'
+
+grid_color = '#555555'
+
+font_settings = dict(
+        family="Courier New, monospace",
+        size=25,
+        color="#000000")
+
 # Generate colors
 def get_N_HexCol(N=5):
     HSV_tuples = [(x * 1.0 / N, 1, 1) for x in range(N)]
@@ -126,8 +139,195 @@ def get_line_plot(evaluation_data, models, colors):
             plot_bgcolor=background_color,
             )
 
-    fig.update_xaxes(title_text="Epoch", gridwidth=1)
-    fig.update_yaxes(title_text="Accuracy", gridwidth=1)
+    fig.update_xaxes(
+        title_text="Epoch",
+        gridwidth=1,
+        gridcolor=grid_color,
+        )
+
+    fig.update_yaxes(
+        title_text="Accuracy",
+        gridwidth=1,
+        gridcolor=grid_color,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor=grid_color,
+        )
+    return fig
+
+def get_subnet_plot(evaluation_data, subnets, models, colors):
+    # Extract model-specific data
+    models_data = {}
+    for model in models:
+        models_data[model] = [evaluation_data["{}.{}".format(model, i)] for i in range(max_epochs)]
+
+    performance_per_subnet = {}
+    for subnet in subnets:
+        performance_per_subnet[subnet] = list()
+
+    for epoch in range(max_epochs):
+        subnet_value_list = {}
+
+        for subnet in subnets:
+            subnet_value_list[subnet] = list()
+
+        for model in models:
+            corresponding_subnet = "vanilla"
+            for subnet in subnets:
+                if subnet in model:
+                    corresponding_subnet = subnet
+
+            subnet_value_list[corresponding_subnet].append(evaluation_data["{}.{}".format(model, epoch)][select_data])
+
+        for subnet in subnets:
+            performance_per_subnet[subnet].append(np.array(subnet_value_list[subnet]).mean())
+
+
+    # Plot evaluation data
+    # Create traces
+    fig = go.Figure()
+    for model, data in performance_per_subnet.items():
+        fig.add_trace(go.Scatter(
+            x=list(range(max_epochs)),
+            y=[datapoint for datapoint in data],
+            mode='lines',
+            name=model.upper(),
+            line=dict(width=3, color=colors[list(performance_per_subnet.keys()).index(model)])))
+
+    fig.add_trace(go.Scatter(
+            x=list(range(max_epochs)),
+            y=[const_vision_accuracy]*max_epochs,
+            mode='lines',
+            name='BITBOTS_VISION',
+            line=dict(color=vision_color, width=5)))
+
+    fig.update_layout(
+            font=font_settings,
+            paper_bgcolor=background_color,
+            plot_bgcolor=background_color,
+            )
+
+    fig.update_xaxes(
+        title_text="Epoch",
+        gridwidth=1,
+        gridcolor=grid_color,
+        )
+
+    fig.update_yaxes(
+        title_text="Accuracy",
+        gridwidth=1,
+        gridcolor=grid_color,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor=grid_color,
+        )
+
+    return fig
+
+def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
+    fig = go.Figure()
+
+    # Extract model-specific data
+    models_data = {}
+    for model in models:
+        models_data[model] = [evaluation_data["{}.{}".format(model, i)] for i in range(max_epochs)]
+
+    # Encoder
+    subnets = encoder
+    performance_per_subnet = {}
+    for subnet in subnets:
+        performance_per_subnet[subnet] = list()
+
+    for epoch in range(max_epochs):
+        subnet_value_list = {}
+
+        for subnet in subnets:
+            subnet_value_list[subnet] = list()
+
+        for model in models:
+            corresponding_subnet = "vanilla"
+            for subnet in subnets:
+                if subnet in model:
+                    corresponding_subnet = subnet
+
+            subnet_value_list[corresponding_subnet].append(evaluation_data["{}.{}".format(model, epoch)][select_data])
+
+        for subnet in subnets:
+            performance_per_subnet[subnet].append(np.array(subnet_value_list[subnet]).mean())
+
+
+    # Plot evaluation data
+    # Create traces
+    for model, data in performance_per_subnet.items():
+        fig.add_trace(go.Scatter(
+            x=list(range(max_epochs)),
+            y=[datapoint for datapoint in data],
+            mode='lines',
+            name=model.upper(),
+            line=dict(width=3, color=colors[subnets.index(model)])))
+
+    # Decoder
+    subnets = decoder
+    performance_per_subnet = {}
+    for subnet in subnets:
+        performance_per_subnet[subnet] = list()
+
+    for epoch in range(max_epochs):
+        subnet_value_list = {}
+
+        for subnet in subnets:
+            subnet_value_list[subnet] = list()
+
+        for model in models:
+            corresponding_subnet = "vanilla"
+            for subnet in subnets:
+                if subnet in model:
+                    corresponding_subnet = subnet
+
+            subnet_value_list[corresponding_subnet].append(evaluation_data["{}.{}".format(model, epoch)][select_data])
+
+        for subnet in subnets:
+            performance_per_subnet[subnet].append(np.array(subnet_value_list[subnet]).mean())
+
+
+    # Plot evaluation data
+    # Create traces
+    for model, data in performance_per_subnet.items():
+        fig.add_trace(go.Scatter(
+            x=list(range(max_epochs)),
+            y=[datapoint for datapoint in data],
+            mode='lines',
+            name=model.upper(),
+            line=dict(width=3, dash='dot', color=colors[subnets.index(model)+len(encoder)])))
+
+    fig.add_trace(go.Scatter(
+            x=list(range(max_epochs)),
+            y=[const_vision_accuracy]*max_epochs,
+            mode='lines',
+            name='BITBOTS_VISION',
+            line=dict(color=vision_color, width=5)))
+
+    fig.update_layout(
+            font=font_settings,
+            paper_bgcolor=background_color,
+            plot_bgcolor=background_color,
+            )
+
+    fig.update_xaxes(
+        title_text="Epoch",
+        gridwidth=1,
+        gridcolor=grid_color,
+        )
+
+    fig.update_yaxes(
+        title_text="Accuracy",
+        gridwidth=1,
+        gridcolor=grid_color,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor=grid_color,
+        )
+
     return fig
 
 def get_bar_plot(evaluation_data, models):
@@ -190,62 +390,6 @@ def get_bar_plot(evaluation_data, models):
         )
     return fig
 
-def get_subnet_plot(evaluation_data, subnets, models, colors):
-    # Extract model-specific data
-    models_data = {}
-    for model in models:
-        models_data[model] = [evaluation_data["{}.{}".format(model, i)] for i in range(max_epochs)]
-
-    performance_per_subnet = {}
-    for subnet in subnets:
-        performance_per_subnet[subnet] = list()
-
-    for epoch in range(max_epochs):
-        subnet_value_list = {}
-
-        for subnet in subnets:
-            subnet_value_list[subnet] = list()
-
-        for model in models:
-            corresponding_subnet = "vanilla"
-            for subnet in subnets:
-                if subnet in model:
-                    corresponding_subnet = subnet
-
-            subnet_value_list[corresponding_subnet].append(evaluation_data["{}.{}".format(model, epoch)][select_data])
-
-        for subnet in subnets:
-            performance_per_subnet[subnet].append(np.array(subnet_value_list[subnet]).mean())
-
-
-    # Plot evaluation data
-    # Create traces
-    fig = go.Figure()
-    for model, data in performance_per_subnet.items():
-        fig.add_trace(go.Scatter(
-            x=list(range(max_epochs)),
-            y=[datapoint for datapoint in data],
-            mode='lines',
-            name=model.upper(),
-            line=dict(width=3, color=colors[list(performance_per_subnet.keys()).index(model)])))
-
-    fig.add_trace(go.Scatter(
-            x=list(range(max_epochs)),
-            y=[const_vision_accuracy]*max_epochs,
-            mode='lines',
-            name='BITBOTS_VISION',
-            line=dict(color=vision_color, width=5)))
-
-    fig.update_layout(
-            font=font_settings,
-            paper_bgcolor=background_color,
-            plot_bgcolor=background_color,
-            )
-
-    fig.update_xaxes(title_text="Epoch", gridwidth=1)
-    fig.update_yaxes(title_text="Accuracy", gridwidth=1)
-    return fig
-
 def get_timing_plot(evaluation_data, models):
     fig = go.Figure()
 
@@ -254,8 +398,14 @@ def get_timing_plot(evaluation_data, models):
         x=['BITBOTS_VISION'],
         y=[const_vision_timing],
         text=['%.3f'%round(const_vision_timing, 3)],
-        textposition='auto',
-        error_y=dict(type='constant', value=const_vision_timing_std_dev),
+        textposition='outside',
+        textangle=90,
+        marker_color=[vision_color],
+        error_y=dict(
+            type='constant',
+            value=const_vision_timing_std_dev,
+            color=main_color
+            ),
     )
 
     # Plot evaluation data
@@ -264,9 +414,14 @@ def get_timing_plot(evaluation_data, models):
             x=[model.upper()],
             y=[data['mean']],
             text=['%.3f'%round(data['mean'], 3)],
-            marker_color=[colors[main_models.index(model)]],
-            textposition='auto',
-            error_y=dict(type='constant', value=data['std']),
+            marker_color=[main_color],
+            textposition='inside',
+            textangle=90,
+            error_y=dict(
+                type='constant',
+                value=data['std'],
+                color=vision_color,
+                ),
         )
 
     fig.update_layout(
@@ -276,8 +431,19 @@ def get_timing_plot(evaluation_data, models):
             showlegend=False,
             )
 
-    fig.update_xaxes(title_text="Model", gridwidth=1)
-    fig.update_yaxes(title_text="Time [s]", gridwidth=1)
+    fig.update_xaxes(
+        title_text="Model",
+        showgrid=False,
+        )
+
+    fig.update_yaxes(
+        title_text="Time [s]",
+        gridwidth=1,
+        gridcolor=grid_color,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor=grid_color
+        )
     return fig
 
 def get_cost_benifit_plot(accuracy_data, timing_data, models):
@@ -330,23 +496,17 @@ def get_cost_benifit_plot(accuracy_data, timing_data, models):
         gridcolor=grid_color,
         zeroline=True,
         zerolinewidth=2,
-        zerolinecolor=grid_color
+        zerolinecolor=grid_color,
         )
     return fig
 
 
-# SETTINGS #########################################################################################
+def output(fig, path, pdf=PDF):
+    if pdf:
+        fig.write_image(path + ".pdf", width=1500, height=1100)  # Save PDF
+    else:
+        py.plot(fig, filename=path + ".html", auto_open=True)  # Show HTML
 
-background_color = 'rgba(0,0,0,0)'
-vision_color = '#F67280'
-main_color = '#083358'
-
-grid_color = '#555555'
-
-font_settings = dict(
-        family="Courier New, monospace",
-        size=25,
-        color="#000000")
 
 # Load accuracy evaluation data
 with open(accuracy_evaluation_file, 'r') as file:
@@ -356,44 +516,31 @@ with open(accuracy_evaluation_file, 'r') as file:
 with open(timing_evaluation_file, 'r') as file:
     timing_evaluation_data = yaml.full_load(file)
 
+
 # # Create plot with all models
-# main_fig = get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models)))
-# #main_fig.write_image(main_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(main_fig, filename=main_plot_filename + ".html", auto_open=True)  # Show HTML
+# output(get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models))), main_plot_filename)
 
-# selection as in paper
-# # Create plot with selected models
-# selected_fig = get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models)))
-# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(selected_fig, filename=selected_plot_filename + ".html", auto_open=True)  # Show HTML
-
-# + decoder?
-# # Create plot for each encoder
-# encoder_fig = get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders)))
-# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(encoder_fig, filename=encoder_plot_filename + ".html", auto_open=True)  # Show HTML
+# Create plot with selected models
+output(get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models))), selected_plot_filename)
 
 # # Create plot for each encoder
-# decoder_fig = get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders)))
-# #selected_fig.write_image(selected_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(decoder_fig, filename=decoder_plot_filename + ".html", auto_open=True)  # Show HTML
+# output(get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders))), encoder_plot_filename)
 
-#
-# # Create bar plot with mean accuracy of percentile of all models
-# mean_acc_fig = get_bar_plot(accuracy_evaluation_data, main_models)
-# # mean_acc_fig.write_image(mean_acc_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(mean_acc_fig, filename=mean_acc_plot_filename + ".html", auto_open=True)  # Show HTML
+# # Create plot for each decoder
+# output(get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders))), decoder_plot_filename)
+
+# Create plot for each encoder and decoder
+output(get_encoder_decoder_plot(accuracy_evaluation_data, encoders, decoders, main_models, get_N_HexCol(len(encoders+decoders))), encoder_decoder_plot_filename)
+
+# Create bar plot with mean accuracy of percentile of all models
+output(get_bar_plot(accuracy_evaluation_data, main_models), mean_acc_plot_filename)
 
 # TODO: missing models
-# # Create timing bar plot with all models
-# timing_fig = get_timing_plot(timing_evaluation_data, main_models)
-# # timing_fig.write_image(timing_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(timing_fig, filename=timing_plot_filename + ".html", auto_open=True)  # Show HTML
+# Create timing bar plot with all models
+output(get_timing_plot(timing_evaluation_data, main_models), timing_plot_filename)
 
 # cost benifit
-# # Create performance bar plot with all models
-# cost_benifit_fig = get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models)
-# # performance_fig.write_image(cost_benifit_plot_filename + ".pdf", width=1500, height=1100)  # Save PDF
-# py.plot(cost_benifit_fig, filename=cost_benifit_plot_filename + ".html", auto_open=True)  # Show HTML
+# Create performance bar plot with all models
+output(get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models), cost_benifit_plot_filename)
 
 # TODO: vision default value
