@@ -12,11 +12,12 @@ import plotly.graph_objs as go
 # Config
 ########
 
-PDF = False
-const_vision_accuracy = 0.925
+PDF = True
+const_vision_optimized_accuracy = 0.925
+const_vision_unoptimized_accuracy = 0.010140472
 accuracy_evaluation_file = "/home/jan/accuracy_eval.yaml"
 max_epochs = 60
-select_data = "mean_IU"
+select_data = "class_wise_IU"
 percentile_rank = 70
 main_plot_filename = "/tmp/accuracy_plot"
 selected_plot_filename = "/tmp/accuracy_sel_plot"
@@ -30,7 +31,7 @@ timing_plot_filename = "/tmp/timing_plot"
 const_vision_timing = 0.011721170167156267
 const_vision_timing_std_dev = 0.0021944406596045426
 
-cost_benifit_plot_filename = "/tmp/performance_plot"
+cost_benifit_plot_filename = "/tmp/cost_benefit_plot"
 
 main_models = [
     "fcn_8",
@@ -90,14 +91,14 @@ performant_models = [
     ]
 
 background_color = 'rgba(0,0,0,0)'
-vision_color = '#F67280'
+second_color = '#F67280'
 main_color = '#083358'
 
 grid_color = '#555555'
 
 font_settings = dict(
         family="Courier New, monospace",
-        size=25,
+        size=20,
         color="#000000")
 
 # Generate colors
@@ -128,10 +129,10 @@ def get_line_plot(evaluation_data, models, colors):
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
-            y=[const_vision_accuracy]*max_epochs,
+            y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
-            line=dict(color=vision_color, width=5)))
+            line=dict(color=second_color, width=5)))
 
     fig.update_layout(
             font=font_settings,
@@ -196,10 +197,10 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
-            y=[const_vision_accuracy]*max_epochs,
+            y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
-            line=dict(color=vision_color, width=5)))
+            line=dict(color=second_color, width=5)))
 
     fig.update_layout(
             font=font_settings,
@@ -302,10 +303,10 @@ def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
-            y=[const_vision_accuracy]*max_epochs,
+            y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_VISION',
-            line=dict(color=vision_color, width=5)))
+            line=dict(color=second_color, width=5)))
 
     fig.update_layout(
             font=font_settings,
@@ -330,63 +331,66 @@ def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
 
     return fig
 
-def get_bar_plot(evaluation_data, models):
+def get_accuracy_bar_plot(evaluation_data, models):
     # Extract model-specific data
-    models_data = {}
+    models_data = {
+        'BITBOTS_OPTIMIZED': [const_vision_optimized_accuracy, 0],
+        'BITBOTS_UNOPTIMIZED': [const_vision_unoptimized_accuracy, 0]
+        }
     for model in models:
-        models_data[model] = [evaluation_data["{}.{}".format(model, i)][select_data] for i in range(max_epochs)]
+        datapoints = [evaluation_data["{}.{}".format(model, i)][select_data][1] for i in range(max_epochs)]
+        percentile = sorted(datapoints)[-(int(((100-percentile_rank)/100)*len(datapoints))):]
+        models_data[model] = [statistics.mean(percentile), statistics.stdev(percentile)]
+
+    # Sort by value
+    models_data = {k: v for k, v in sorted(models_data.items(), key=lambda item: item[1][0], reverse=True)}
 
     fig = go.Figure()
 
-    # Plot vision data
-    fig.add_bar(
-        x=['BITBOTS_VISION'],
-        y=[const_vision_accuracy],
-        text=['%.3f'%round(const_vision_accuracy, 3)],
-        marker_color=[vision_color],
-        textposition='auto',
-    )
-
     # Plot evaluation data
     for model, data in models_data.items():
-        percentile = sorted(data)[-(int(((100-percentile_rank)/100)*len(data))):]
-        datapoint = statistics.mean(percentile)  # mean of percentile
-        # datapoint = statistics.mean(data)  # mean
+        if 'bitbots' in model.lower():
+            bar_color = second_color
+            error_color = 'rgba(0,0,0,0)'
+        else:
+            bar_color = main_color
+            error_color = second_color
+            
         fig.add_bar(
-            x=[model.upper()],
-            y=[datapoint],
-            text=['%.3f'%round(datapoint, 3)],
-            marker_color=[main_color],
-            textposition='inside',
-            textangle=90,
-            error_y=dict(
+            x=[data[0]],
+            y=[model.upper()],
+            text=['%.3f'%round(data[0], 3)],
+            marker_color=[bar_color],
+            textposition='auto',
+            error_x=dict(
                 type='constant',
-                value=statistics.stdev(percentile),
-                color=vision_color,
+                value=data[1],
+                color=error_color,
                 ),
+            orientation='h',
         )
 
     fig.update_layout(
-            font=font_settings,
-            paper_bgcolor=background_color,
-            plot_bgcolor=background_color,
-            showlegend=False,
-            )
+        font=font_settings,
+        paper_bgcolor=background_color,
+        plot_bgcolor=background_color,
+        showlegend=False,
+        )
 
     fig.update_xaxes(
-            title_text="Model",
-            showgrid=False,
-            )
-
-    fig.update_yaxes(
         title_text="Mean accuracy",
-        range=[0.45, 1],
-        nticks=12,
+        range=[0, 1],
+        nticks=11,
         gridwidth=1,
         gridcolor=grid_color,
         zeroline=True,
         zerolinewidth=2,
         zerolinecolor=grid_color
+        )
+
+    fig.update_yaxes(
+        title_text="Model",
+        showgrid=False,
         )
     return fig
 
@@ -400,7 +404,7 @@ def get_timing_plot(evaluation_data, models):
         text=['%.3f'%round(const_vision_timing, 3)],
         textposition='outside',
         textangle=90,
-        marker_color=[vision_color],
+        marker_color=[second_color],
         error_y=dict(
             type='constant',
             value=const_vision_timing_std_dev,
@@ -420,7 +424,7 @@ def get_timing_plot(evaluation_data, models):
             error_y=dict(
                 type='constant',
                 value=data['std'],
-                color=vision_color,
+                color=second_color,
                 ),
         )
 
@@ -457,9 +461,9 @@ def get_cost_benifit_plot(accuracy_data, timing_data, models):
     # Plot vision data
     fig.add_bar(
         x=['BITBOTS_VISION'],
-        y=[const_vision_accuracy / const_vision_timing],
-        text=['%.3f'%round(const_vision_accuracy / const_vision_timing, 3)],
-        marker_color=[vision_color],
+        y=[const_vision_optimized_accuracy / const_vision_timing],
+        text=['%.3f'%round(const_vision_optimized_accuracy / const_vision_timing, 3)],
+        marker_color=[second_color],
         textposition='inside',
         textangle=0,
     )
@@ -501,9 +505,9 @@ def get_cost_benifit_plot(accuracy_data, timing_data, models):
     return fig
 
 
-def output(fig, path, pdf=PDF):
+def output(fig, path, pdf=PDF, width=1500, height=1100):
     if pdf:
-        fig.write_image(path + ".pdf", width=1500, height=1100)  # Save PDF
+        fig.write_image(path + ".pdf", width=width, height=height)  # Save PDF
     else:
         py.plot(fig, filename=path + ".html", auto_open=True)  # Show HTML
 
@@ -521,7 +525,7 @@ with open(timing_evaluation_file, 'r') as file:
 # output(get_line_plot(accuracy_evaluation_data, main_models, get_N_HexCol(len(main_models))), main_plot_filename)
 
 # Create plot with selected models
-output(get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models))), selected_plot_filename)
+# output(get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len(main_models))), selected_plot_filename)
 
 # # Create plot for each encoder
 # output(get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_HexCol(len(encoders))), encoder_plot_filename)
@@ -530,17 +534,15 @@ output(get_line_plot(accuracy_evaluation_data, selected_models, get_N_HexCol(len
 # output(get_subnet_plot(accuracy_evaluation_data, decoders, main_models, get_N_HexCol(len(decoders))), decoder_plot_filename)
 
 # Create plot for each encoder and decoder
-output(get_encoder_decoder_plot(accuracy_evaluation_data, encoders, decoders, main_models, get_N_HexCol(len(encoders+decoders))), encoder_decoder_plot_filename)
+# output(get_encoder_decoder_plot(accuracy_evaluation_data, encoders, decoders, main_models, get_N_HexCol(len(encoders+decoders))), encoder_decoder_plot_filename)
 
 # Create bar plot with mean accuracy of percentile of all models
-output(get_bar_plot(accuracy_evaluation_data, main_models), mean_acc_plot_filename)
+output(get_accuracy_bar_plot(accuracy_evaluation_data, main_models), mean_acc_plot_filename, width=1000, height=1000)
 
-# TODO: missing models
 # Create timing bar plot with all models
-output(get_timing_plot(timing_evaluation_data, main_models), timing_plot_filename)
+# output(get_timing_plot(timing_evaluation_data, main_models), timing_plot_filename)
 
-# cost benifit
-# Create performance bar plot with all models
-output(get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models), cost_benifit_plot_filename)
+# Create cost benefit bar plot with all models
+# output(get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models), cost_benifit_plot_filename)
 
 # TODO: vision default value
