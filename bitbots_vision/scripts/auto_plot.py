@@ -545,4 +545,4 @@ output(get_accuracy_bar_plot(accuracy_evaluation_data, main_models), mean_acc_pl
 output(get_timing_plot(timing_evaluation_data), timing_plot_filename, width=1000, height=1000)
 
 # Create cost benefit bar plot with all models
-output(get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models), cost_benifit_plot_filename, width=1000, height=1000)
+output(get_cost_benifit_plot(accuracy_evaluation_data, timing_evaluation_data, performant_models), cost_benifit_plot_filename, width=1000, height=500)
