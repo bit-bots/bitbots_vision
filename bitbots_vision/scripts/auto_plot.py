@@ -125,14 +125,14 @@ def get_line_plot(evaluation_data, models, colors):
             y=[datapoint[select_data][1] for datapoint in data],
             mode='lines',
             name=model.upper(),
-            line=dict(width=3, color=colors[main_models.index(model)])))
+            line=dict(width=5, color=colors[main_models.index(model)])))
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
             y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_OPTIMIZED',
-            line=dict(color=second_color, width=5)))
+            line=dict(color=second_color, width=8)))
 
     fig.update_layout(
             font=font_settings,
@@ -193,14 +193,14 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
             y=[datapoint for datapoint in data],
             mode='lines',
             name=model.upper(),
-            line=dict(width=3, color=colors[list(performance_per_subnet.keys()).index(model)])))
+            line=dict(width=5, color=colors[list(performance_per_subnet.keys()).index(model)])))
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
             y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_OPTIMIZED',
-            line=dict(color=second_color, width=5)))
+            line=dict(color=second_color, width=8)))
 
     fig.update_layout(
             font=font_settings,
@@ -265,7 +265,7 @@ def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
             y=[datapoint for datapoint in data],
             mode='lines',
             name=model.upper(),
-            line=dict(width=3, color=colors[subnets.index(model)])))
+            line=dict(width=5, color=colors[subnets.index(model)])))
 
     # Decoder
     subnets = decoder
@@ -299,14 +299,14 @@ def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
             y=[datapoint for datapoint in data],
             mode='lines',
             name=model.upper(),
-            line=dict(width=3, dash='dot', color=colors[subnets.index(model)+len(encoder)])))
+            line=dict(width=5, dash='dot', color=colors[subnets.index(model)+len(encoder)])))
 
     fig.add_trace(go.Scatter(
             x=list(range(max_epochs)),
             y=[const_vision_optimized_accuracy]*max_epochs,
             mode='lines',
             name='BITBOTS_OPTIMIZED',
-            line=dict(color=second_color, width=5)))
+            line=dict(color=second_color, width=8)))
 
     fig.update_layout(
             font=font_settings,
@@ -455,16 +455,16 @@ def get_timing_plot(evaluation_data):
 def get_cost_benifit_plot(accuracy_data, timing_data, models):
     # Extract model-specific data
     models_data = {
-        'BITBOTS_OPTIMIZED': const_vision_optimized_accuracy / const_vision_timing,
+        'BITBOTS_OPTIMIZED': const_vision_timing / const_vision_optimized_accuracy,
         }
 
     for model in models:
         datapoints = [accuracy_data["{}.{}".format(model, i)][select_data][1] for i in range(max_epochs)]
         percentile = sorted(datapoints)[-(int(((100-percentile_rank)/100)*len(datapoints))):]
-        models_data[model] = statistics.mean(percentile) / timing_evaluation_data[model]['mean']  # mean of percentile per time
+        models_data[model] =  timing_evaluation_data[model]['mean'] / statistics.mean(percentile)  # time per mean of percentile
 
     # Sort by value
-    models_data = {k: v for k, v in sorted(models_data.items(), key=lambda item: item[1], reverse=True)}
+    models_data = {k: v for k, v in sorted(models_data.items(), key=lambda item: item[1])}
 
     fig = go.Figure()
 
@@ -492,8 +492,7 @@ def get_cost_benifit_plot(accuracy_data, timing_data, models):
             )
 
     fig.update_xaxes(
-        title_text="Cost/Benifit ratio [IOU/s]",
-        range=[0, 80],
+        title_text="Cost/Benifit ratio [s/IOU]",
         gridwidth=1,
         gridcolor=grid_color,
         zeroline=True,
