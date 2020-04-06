@@ -138,6 +138,7 @@ def get_line_plot(evaluation_data, models, colors):
             font=font_settings,
             paper_bgcolor=background_color,
             plot_bgcolor=background_color,
+            showlegend=False,
             )
 
     fig.update_xaxes(
@@ -206,6 +207,7 @@ def get_subnet_plot(evaluation_data, subnets, models, colors):
             font=font_settings,
             paper_bgcolor=background_color,
             plot_bgcolor=background_color,
+            showlegend=False,
             )
 
     fig.update_xaxes(
@@ -312,6 +314,7 @@ def get_encoder_decoder_plot(evaluation_data, encoder, decoder, models, colors):
             font=font_settings,
             paper_bgcolor=background_color,
             plot_bgcolor=background_color,
+            showlegend=False,
             )
 
     fig.update_xaxes(
