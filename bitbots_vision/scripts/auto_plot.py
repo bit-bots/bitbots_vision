@@ -15,13 +15,16 @@ import plotly.graph_objs as go
 PDF = True
 const_vision_optimized_accuracy = 0.925
 const_vision_default_accuracy = 0.010140472
+const_vision_natural_light_accuracy = 0.7444397868547964
 accuracy_evaluation_file = "/home/jan/accuracy_eval.yaml"
+natural_light_accuracy_evaluation_file = "/home/jan/deepfield_natural_performance.yaml"
 max_epochs = 60
 select_data = "class_wise_IU"
 percentile_rank = 70
 main_plot_filename = "/tmp/accuracy_plot"
 selected_plot_filename = "/tmp/accuracy_sel_plot"
 mean_acc_plot_filename = "/tmp/mean_accuracy_plot"
+natural_light_mean_acc_plot_filename = "/tmp/natural_light_mean_accuracy_plot"
 encoder_plot_filename = "/tmp/encoder_plot"
 decoder_plot_filename = "/tmp/decoder_plot"
 encoder_decoder_plot_filename = "/tmp/encoder_decoder_plot"
@@ -397,6 +400,61 @@ def get_accuracy_bar_plot(evaluation_data, models):
         )
     return fig
 
+def get_natural_light_accuracy_bar_plot(evaluation_data, models):
+    # Extract model-specific data
+    models_data = {
+        'BITBOTS_OPTIMIZED': 0.7444397868547964,
+        }
+    for model in models:
+        models_data[model] = evaluation_data[model][select_data][1]
+
+    # Sort by value
+    models_data = {k: v for k, v in sorted(models_data.items(), key=lambda item: item[1], reverse=True)}
+
+    fig = go.Figure()
+
+    # Plot evaluation data
+    for model, data in models_data.items():
+        if 'bitbots' in model.lower():
+            bar_color = second_color
+            error_color = 'rgba(0,0,0,0)'
+        else:
+            bar_color = main_color
+            error_color = second_color
+
+        fig.add_bar(
+            x=[data],
+            y=[model.upper()],
+            text=['%.3f'%round(data, 3)],
+            marker_color=[bar_color],
+            textposition='auto',
+            orientation='h',
+        )
+
+    fig.update_layout(
+        font=font_settings,
+        paper_bgcolor=background_color,
+        plot_bgcolor=background_color,
+        showlegend=False,
+        )
+
+    fig.update_xaxes(
+        title_text="Mean accuracy",
+        range=[0, 1],
+        nticks=11,
+        gridwidth=1,
+        gridcolor=grid_color,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor=grid_color
+        )
+
+    fig.update_yaxes(
+        title_text="Model",
+        showgrid=False,
+        )
+    return fig
+
 def get_timing_plot(evaluation_data):
     data = evaluation_data.copy()
     # Add bitbots const
@@ -521,6 +579,10 @@ def output(fig, path, pdf=PDF, width=1500, height=1100):
 with open(accuracy_evaluation_file, 'r') as file:
     accuracy_evaluation_data = yaml.full_load(file)
 
+# Load natural lightaccuracy evaluation data
+with open(natural_light_accuracy_evaluation_file, 'r') as file:
+    natural_light_accuracy_evaluation_data = yaml.full_load(file)
+
 # Load timing evaluation data
 with open(timing_evaluation_file, 'r') as file:
     timing_evaluation_data = yaml.full_load(file)
@@ -543,6 +605,9 @@ output(get_subnet_plot(accuracy_evaluation_data, encoders, main_models, get_N_He
 
 # Create bar plot with mean accuracy of percentile of all models
 output(get_accuracy_bar_plot(accuracy_evaluation_data, main_models), mean_acc_plot_filename, width=1000, height=1000)
+
+# Create bar plot with mean accuracy of natural light for performant models
+output(get_natural_light_accuracy_bar_plot(natural_light_accuracy_evaluation_data, performant_models), natural_light_mean_acc_plot_filename, width=1000, height=500)
 
 # Create timing bar plot with all models
 output(get_timing_plot(timing_evaluation_data), timing_plot_filename, width=1000, height=1000)
