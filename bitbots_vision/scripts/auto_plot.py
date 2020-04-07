@@ -472,7 +472,7 @@ def get_timing_plot(evaluation_data):
     for model, data in data.items():
         if 'bitbots' in model.lower():
             bar_color = second_color
-            error_color = 'rgba(0,0,0,0)'
+            error_color = main_color
         else:
             bar_color = main_color
             error_color = second_color
