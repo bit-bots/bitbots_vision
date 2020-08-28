@@ -25,7 +25,7 @@ POSE_PAIRS = [["Neck", "RShoulder"], ["Neck", "LShoulder"], ["RShoulder", "RElbo
               ["LHip", "LKnee"], ["LKnee", "LAnkle"], ["Neck", "Nose"], ["Nose", "REye"],
               ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]]
 
-THRESHOLD = 0.1
+THRESHOLD = 0.5
 
 
 class OpenPose:
@@ -71,10 +71,10 @@ class OpenPose:
         # Set request id for the stick. Since we only make one call at a time, we use a static parameter.
         request_id = 1
         # Resize image to open pose input size
-        in_frame = cv.resize(image, (self._w, self._h))
+        image_resized = cv.resize(image, (self._w, self._h))
 
         # resize input_frame to network size
-        in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+        in_frame = image_resized.transpose((2, 0, 1))  # Change data layout from HWC to CHW
         in_frame = in_frame.reshape((self._n, self._c, self._h, self._w))
 
         # Start inference
@@ -114,11 +114,11 @@ class OpenPose:
                 idTo = BODY_PARTS[partTo]
 
                 if points[idFrom] and points[idTo]:
-                    cv.line(image, points[idFrom], points[idTo], (0, 255, 0), 3)
-                    cv.ellipse(image, points[idFrom], (3, 3), 0, 0, 360, (0, 0, 255), cv.FILLED)
-                    cv.ellipse(image, points[idTo], (3, 3), 0, 0, 360, (0, 0, 255), cv.FILLED)
+                    cv.line(image_resized, points[idFrom], points[idTo], (0, 255, 0), 3)
+                    cv.ellipse(image_resized, points[idFrom], (3, 3), 0, 0, 360, (0, 0, 255), cv.FILLED)
+                    cv.ellipse(image_resized, points[idTo], (3, 3), 0, 0, 360, (0, 0, 255), cv.FILLED)
 
-            return image
+            return image_resized
             # for item in output.keys():
             #    print(item)
 
