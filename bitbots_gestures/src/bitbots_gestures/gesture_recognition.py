@@ -4,8 +4,8 @@ import rospy
 import cv2 as cv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-LOGGER_NAME = "gesture_recognition"
 
+LOGGER_NAME = "gesture_recognition"
 
 try:
     from openvino.inference_engine import IENetwork, IECore
@@ -13,7 +13,6 @@ except ImportError:
     rospy.logerr(
         "Not able to run OpenPose on the Intel NCS2 TPU! The OpenVINO SDK should be installed if you intend to run OpenPose on the TPU",
         logger_name=LOGGER_NAME)
-
 
 BODY_PARTS = {"Nose": 0, "Neck": 1, "RShoulder": 2, "RElbow": 3, "RWrist": 4,
               "LShoulder": 5, "LElbow": 6, "LWrist": 7, "RHip": 8, "RKnee": 9,
@@ -81,8 +80,7 @@ class OpenPose:
         # Start inference
         self._exec_net.start_async(request_id=request_id, inputs={self._input_blob: in_frame})
 
-        # Collecting object detection results
-        detections = list()
+
         # Create barrier. This lets all following processing steps wait until the prediction is calculated.
         if self._exec_net.requests[request_id].wait(-1) == 0:
             # Get output
@@ -133,9 +131,11 @@ if __name__ == "__main__":
 
     image_msg = None
 
+
     def image_cb(msg: Image):
         global image_msg
         image_msg = msg
+
 
     rospy.init_node("gestures")
     sub = rospy.Subscriber("/image_raw", Image, image_cb, queue_size=1, tcp_nodelay=True)
