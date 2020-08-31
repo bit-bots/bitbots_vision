@@ -1,7 +1,7 @@
 <package format="2">
   <name>bitbots_gestures</name>
   <description>
-    Package to detect gestures using open pose and open vino.
+    Package to detect gestures based on human poses from open pose.
   </description>
 
   <version>0.0.1</version>
@@ -16,7 +16,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>rospy</depend>
-  <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
@@ -30,7 +29,7 @@
 
   <export>
     <bitbots_documentation>
-      <language>c++</language>
+      <language>python</language>
       <status>unknown</status>
     </bitbots_documentation>
   </export>
