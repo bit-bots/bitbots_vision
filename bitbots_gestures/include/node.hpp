@@ -18,7 +18,7 @@
 #include <opencv2/core/core.hpp>
 #include "bitbots_gestures/HumanPoseEstimation.h"
 #include "bitbots_gestures/HumanPoseArray.h"
-
+#include <ros/package.h>
 
 namespace human_pose_estimation {
 class HumanPoseEstimatorNode {
@@ -28,12 +28,6 @@ class HumanPoseEstimatorNode {
  private:
   void imageCb(const sensor_msgs::ImageConstPtr& msg);
 
-  image_transport::ImageTransport it_;
-  ros::NodeHandle nh_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher debug_image_pub_;
-
-  ros::Publisher pose_pub_;
   cv_bridge::CvImagePtr cv_ptr_;
   bool new_image;
 };
