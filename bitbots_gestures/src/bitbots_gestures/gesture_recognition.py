@@ -32,6 +32,7 @@ class GestureRecognition:
         self.current_pose = None
         self.current_image = None
         self.new_pose = False
+        self.bridge = CvBridge()
         self.pose_sub = rospy.Subscriber("/human_poses", HumanPoseArray, self.pose_cb, queue_size=1, tcp_nodelay=True)
         self.image_sub = rospy.Subscriber("/image_raw", Image, self.image_cb, queue_size=1, tcp_nodelay=True)
         self.gesture_pub = rospy.Publisher("/gesture", Int8)
@@ -40,6 +41,7 @@ class GestureRecognition:
         while not rospy.is_shutdown():
             if self.new_pose:
                 poses = self.current_pose
+                image = self.current_image
                 # poses has following format
                 # poses.poses is an list of detected poses
                 # each of them consists of a list of keypoints and a score
@@ -52,16 +54,16 @@ class GestureRecognition:
                 # todo set correct pose to trainer_pose
                 if trainer_pose is not None:
                     # use the neural network to detect which gesture is currently done
-                    detected_pose = -1
+                    detected_gesture = -1
                     # todo set correct pose number
-                    self.gesture_pub.publish(detected_pose)
+                    self.gesture_pub.publish(detected_gesture)
 
     def pose_cb(self, msg: HumanPoseArray):
         self.current_pose = msg
         self.new_pose = True
 
     def image_cb(self, msg: Image):
-        self.current_image = msg
+        self.current_image = cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
 
 if __name__ == "__main__":
