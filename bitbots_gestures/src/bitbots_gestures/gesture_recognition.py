@@ -1,4 +1,5 @@
 import rospy
+import numpy as np
 from human_pose_estimation_openvino.msg import HumanPoseArray
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int8
@@ -23,6 +24,9 @@ REar = 16
 LEar = 17
 BACKGROUND = 18
 
+# color range for yellow color mask
+LOWER_RANGE = np.array([20, 25, 25])
+UPPER_RANGE = np.array([24, 255, 255])
 
 class GestureRecognition:
 
@@ -50,13 +54,37 @@ class GestureRecognition:
                 self.new_pose = False
                 # we have new pose input
                 # find out which pose (if any) belongs to the person with the yellow jacket
-                trainer_pose = None
-                # todo set correct pose to trainer_pose
+                trainer_pose = find_trainer_pose(poses, image)
+
                 if trainer_pose is not None:
                     # use the neural network to detect which gesture is currently done
                     detected_gesture = -1
                     # todo set correct pose number
                     self.gesture_pub.publish(detected_gesture)
+
+    def find_trainer_pose(poses, image):
+        # create color mask for image
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, LOWER_RANGE, UPPER_RANGE)
+        # find the pose with the most pixels that fit the mask
+        trainer_pose = None
+        max_mask_percentage = 0
+        for pose in poses.poses:
+            # get min/max x & y to estimate the upper body by a rectangle
+            coords = np.array([pose[RShoulder], pose[LShoulder], pose[RHip], pose[LHip]])
+            minX = int(np.min(coords[:,0:1]))
+            maxX = int(np.max(coords[:,0:1]))
+            minY = int(np.min(coords[:,1:2]))
+            maxY = int(np.max(coords[:,1:2]))
+            # calculate the percentage of white pixels in the mask within the body area
+            body_area = mask[minY:maxY,minX:maxX]
+            mask_percentage = np.sum(body_area) / (body_area.size * 255)
+            # keep track of the most fitting pose for the trainer
+            if(mask_percentage > max_mask_percentage):
+                max_mask_percentage = mask_percentage
+                trainer_pose = pose
+
+        return trainer_pose
 
     def pose_cb(self, msg: HumanPoseArray):
         self.current_pose = msg
