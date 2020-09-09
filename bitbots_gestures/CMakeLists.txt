@@ -17,7 +17,6 @@ catkin_python_setup()
 find_package(OpenCV REQUIRED)
 
 catkin_package(
-        INCLUDE_DIRS include
         CATKIN_DEPENDS geometry_msgs rospy sensor_msgs std_msgs message_runtime
 )
 

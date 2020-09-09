@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rospy
 import numpy as np
 import torch
@@ -8,6 +10,9 @@ import math
 from human_pose_estimation_openvino.msg import HumanPoseArray
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int8
+from cv_bridge import CvBridge
+import cv2
+import rospkg
 
 NOSE = 0
 NECK = 1
@@ -30,12 +35,15 @@ LEar = 17
 BACKGROUND = 18
 
 # body labels
-body_labels = ['idle', 'both-arms-up', 'arm-up-right', "arm-up-left", "show-right", "show-left", "show-up-right", "show-up-left", "clap", "cheer", 
-"complain", "both-arms-right", "both-arms-left", "t-pose", "fists-together", "arm-bow-right", "arm-bow-left", "cross-arms", "time-out-low", "time-out-high"]
+body_labels = ['idle', 'both-arms-up', 'arm-up-right', "arm-up-left", "show-right", "show-left", "show-up-right",
+               "show-up-left", "clap", "cheer",
+               "complain", "both-arms-right", "both-arms-left", "t-pose", "fists-together", "arm-bow-right",
+               "arm-bow-left", "cross-arms", "time-out-low", "time-out-high"]
 
 # color range for yellow color mask
 LOWER_RANGE = np.array([20, 25, 25])
 UPPER_RANGE = np.array([24, 255, 255])
+
 
 # pytorch Model class
 class Model(nn.Module):
@@ -53,6 +61,7 @@ class Model(nn.Module):
         x = self.softmax(x)
         return x
 
+
 class GestureRecognition:
 
     def __init__(self):
@@ -62,13 +71,16 @@ class GestureRecognition:
         self.current_image = None
         self.new_pose = False
         self.bridge = CvBridge()
+        rospack = rospkg.RosPack()
+        self.model_path = rospack.get_path('bitbots_gestures') + "/models/model.pth"
+        self.model = torch.load(self.model_path)
         self.pose_sub = rospy.Subscriber("/human_poses", HumanPoseArray, self.pose_cb, queue_size=1, tcp_nodelay=True)
         self.image_sub = rospy.Subscriber("/image_raw", Image, self.image_cb, queue_size=1, tcp_nodelay=True)
-        self.gesture_pub = rospy.Publisher("/gesture", Int8)
+        self.gesture_pub = rospy.Publisher("/gesture", Int8, queue_size=1)
 
     def run(self):
         while not rospy.is_shutdown():
-            if self.new_pose:
+            if self.new_pose and self.current_image is not None:
                 poses = self.current_pose
                 image = self.current_image
                 # poses has following format
@@ -83,15 +95,15 @@ class GestureRecognition:
 
                 if trainer_pose is not None:
                     # use the neural network to detect which gesture is currently done
-                    detected_gesture = self.predict_gesture(trainer_pose)
+                    detected_gesture = self.predict_gesture(trainer_pose.keypoints)
                     print("Detected gesture: ", detected_gesture)
                     # todo set correct pose number
                     self.gesture_pub.publish(detected_gesture)
 
-    #---------------- POSE DETECTION CODE ----------------
+    # ---------------- POSE DETECTION CODE ----------------
 
     # Find the pose which belongs to the trainer
-    def find_trainer_pose(poses, image):
+    def find_trainer_pose(self, poses, image):
         # create color mask for image
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, LOWER_RANGE, UPPER_RANGE)
@@ -100,16 +112,19 @@ class GestureRecognition:
         max_mask_percentage = 0
         for pose in poses.poses:
             # get min/max x & y to estimate the upper body by a rectangle
-            coords = np.array([pose[RShoulder], pose[LShoulder], pose[RHip], pose[LHip]])
-            minX = int(np.min(coords[:,0:1]))
-            maxX = int(np.max(coords[:,0:1]))
-            minY = int(np.min(coords[:,1:2]))
-            maxY = int(np.max(coords[:,1:2]))
+            coords = np.array([[pose.keypoints[RShoulder].x, pose.keypoints[RShoulder].y],
+                               [pose.keypoints[LShoulder].x, pose.keypoints[LShoulder].y],
+                               [pose.keypoints[RHip].x, pose.keypoints[RHip].y],
+                               [pose.keypoints[LHip].x, pose.keypoints[LHip].y]])
+            minX = int(np.min(coords[:, 0:1]))
+            maxX = int(np.max(coords[:, 0:1]))
+            minY = int(np.min(coords[:, 1:2]))
+            maxY = int(np.max(coords[:, 1:2]))
             # calculate the percentage of white pixels in the mask within the body area
-            body_area = mask[minY:maxY,minX:maxX]
+            body_area = mask[minY:maxY, minX:maxX]
             mask_percentage = np.sum(body_area) / (body_area.size * 255)
             # keep track of the most fitting pose for the trainer
-            if(mask_percentage > max_mask_percentage):
+            if (mask_percentage > max_mask_percentage):
                 max_mask_percentage = mask_percentage
                 trainer_pose = pose
 
@@ -164,7 +179,9 @@ class GestureRecognition:
         shoulderR = [(keypoints[RShoulder][0] - minValX) / boundingBoxWidth, (keypoints[RShoulder][1] - minValY) / boundingBoxHeight]
         shoulderL = [(keypoints[LShoulder][0] - minValX) / boundingBoxWidth, (keypoints[LShoulder][1] - minValY) / boundingBoxHeight]
 
-        return np.array([ellbowR[0], ellbowR[1], ellbowL[0], ellbowL[1], handR[0], handR[1], handL[0], handL[1], shoulderR[0], shoulderR[1], shoulderL[0], shoulderL[1]])
+        return np.array(
+            [ellbowR[0], ellbowR[1], ellbowL[0], ellbowL[1], handR[0], handR[1], handL[0], handL[1], shoulderR[0],
+             shoulderR[1], shoulderL[0], shoulderL[1]])
 
     # Get the input tensor for the neural network for body keypoints
     def get_input_tensor(self, keypoints):
@@ -176,11 +193,17 @@ class GestureRecognition:
         input_tensor = input_tensor.float()
         return input_tensor
 
+    def msg_to_keypoints(self, msg):
+        result = []
+        for point in msg:
+            result.append(np.array([point.x, point.y]))
+        return result
+
     # Predict the gesture for given body keypoints
-    def predict_gesture(self, keypoints):
+    def predict_gesture(self, keypoints_msgs):
+        keypoints = self.msg_to_keypoints(keypoints_msgs)
         input_tensor = self.get_input_tensor(keypoints)
-        model = torch.load('model.pth')
-        outputs = model.forward(input_tensor)
+        outputs = self.model.forward(input_tensor)
         _, predicted = torch.max(outputs, 1)
         return body_labels[predicted]
 
