@@ -84,7 +84,7 @@ class Vision:
         # Needed for operations that should only be executed on the first image
         self._first_image_callback = True
 
-        # Reconfigure dict transfer variable
+        # Reconfigure data transfer variable
         self._transfer_reconfigure_data = None
         self._transfer_reconfigure_data_mutex = Lock()
 
@@ -110,15 +110,15 @@ class Vision:
         Main loop that processes the images and configuration changes
         """
         while not rospy.is_shutdown():
-            # Lookup if there is another configuration available
+            # Check for reconfiguration data
             if self._transfer_reconfigure_data is not None:
-                # Copy _config from shared memory
+                # Copy reconfigure data from shared memory
                 with self._transfer_reconfigure_data_mutex:
                     reconfigure_data = deepcopy(self._transfer_reconfigure_data)
                     self._transfer_reconfigure_data = None
                 # Run vision reconfiguration
                 self._configure_vision(*reconfigure_data)
-            # Check if a new image is avalabile
+            # Check for new image
             elif self._transfer_image_msg is not None:
                 # Copy image from shared memory
                 with self._transfer_image_msg_mutex:
@@ -434,8 +434,9 @@ class Vision:
         if self._transfer_image_msg_mutex.locked():
             return
 
-        # Transfer the image to the main thread
-        self._transfer_image_msg = image_msg
+        with self._transfer_image_msg_mutex:
+            # Transfer the image to the main thread
+            self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         """
