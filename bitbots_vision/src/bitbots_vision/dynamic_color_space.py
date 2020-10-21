@@ -63,7 +63,7 @@ class DynamicColorSpace:
             queue_size=1,
             tcp_nodelay=True)
 
-        # Reconfigure dict transfer variable
+        # Reconfigure data transfer variable
         self._transfer_reconfigure_data = None
         self._transfer_reconfigure_data_mutex = Lock()
 
@@ -85,7 +85,7 @@ class DynamicColorSpace:
                 with self._transfer_reconfigure_data_mutex:
                     reconfigure_data = deepcopy(self._transfer_reconfigure_data)
                     self._transfer_reconfigure_data = None
-                # Run vision reconfiguration
+                # Run reconfiguration
                 self._reconfigure(reconfigure_data)
             # Check if a new image is avalabile
             elif self._transfer_image_msg is not None:
@@ -93,7 +93,7 @@ class DynamicColorSpace:
                 with self._transfer_image_msg_mutex:
                     image_msg = deepcopy(self._transfer_image_msg)
                     self._transfer_image_msg = None
-                # Run the vision pipeline
+                # Run the pipeline
                 self._handle_image(image_msg)
                 # Now the first image has been processed
                 self._first_image_callback = False
@@ -105,11 +105,11 @@ class DynamicColorSpace:
         """
         This method is called by the 'vision_config'-message subscriber.
         
-        :param Config msg: new 'vision_config'-message subscriber
+        :param Config msg: 'vision_config'-message subscriber
         :return: None
         """
         with self._transfer_reconfigure_data_mutex:
-            # Set data
+            # Set reconfigure data
             self._transfer_reconfigure_data = msg
 
     def _reconfigure(self, msg):
@@ -197,8 +197,9 @@ class DynamicColorSpace:
 
         if self._transfer_image_msg_mutex.locked():
             return
-        # Transfer the image to the main thread
-        self._transfer_image_msg = image_msg
+        with self._transfer_image_msg_mutex:
+            # Transfer the image to the main thread
+            self._transfer_image_msg = image_msg
 
     def _handle_image(self, image_msg):
         # type: (Image) -> None
