@@ -1,0 +1,36 @@
+<package format="2">
+  <name>bitbots_gestures</name>
+  <description>
+    Package to detect gestures based on human poses from open pose.
+  </description>
+
+  <version>0.0.1</version>
+
+  <maintainer email="bestmann@informatik.uni-hamburg.de">Marc Bestmann</maintainer>
+  <maintainer email="info@bit-bots.de">Hamburg Bit-Bots</maintainer>
+
+  <maintainer email="bestmann@informatik.uni-hamburg.de">Marc Bestmann</maintainer>
+  <author email="info@bit-bots.de">Hamburg Bit-Bots</author>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>image_transport</depend>
+  <depend>humanoid_league_speaker</depend>
+  <depend>python3-numpy</depend>
+  <depend>python3-opencv</depend>
+  <depend>bitbots_docs</depend>
+  <depend>message_runtime</depend>
+  <depend>cv_bridge</depend>
+
+  <export>
+    <bitbots_documentation>
+      <language>python</language>
+      <status>unknown</status>
+    </bitbots_documentation>
+  </export>
+</package>
