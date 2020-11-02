@@ -227,7 +227,7 @@ class Colorpicker(object):
         Saves the current colorspace in a pickle file.
         """
         # Get user input
-        input_path = input(f"Press ENTER to save color space file to '{self._default_path}' or enter output file path: ")
+        input_path = input(f"Press ENTER to save color space file to '{self._default_path}'\nor enter output file path: ")
 
         # Check if the user entered something
         if input_path == "":
