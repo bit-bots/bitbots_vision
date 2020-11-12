@@ -433,7 +433,7 @@ class Vision:
         image_age = rospy.get_rostime() - image_msg.header.stamp
         if 1.0 < image_age.to_sec() < 1000.0:
             rospy.logwarn(f"Vision: Dropped incoming Image-message, because its too old! ({image_age.to_sec()} sec)",
-                          logger_throttle=2, logger_name="")
+                            logger_name="vision")
             return
 
         # Check flag
