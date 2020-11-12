@@ -91,10 +91,10 @@ class DynamicColorSpace:
             elif self._transfer_image_msg is not None:
                 # Copy image from shared memory
                 with self._transfer_image_msg_mutex:
-                    image_msg = deepcopy(self._transfer_image_msg)
+                    image_msg = self._transfer_image_msg
                     self._transfer_image_msg = None
-                # Run the pipeline
-                self._handle_image(image_msg)
+                    # Run the pipeline
+                    self._handle_image(image_msg)
                 # Now the first image has been processed
                 self._first_image_callback = False
             else:
