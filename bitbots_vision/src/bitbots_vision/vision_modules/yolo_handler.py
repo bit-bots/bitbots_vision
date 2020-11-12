@@ -17,7 +17,6 @@ try:
     ie = IECore()
 except NameError:
     rospy.logerr("Please install/source OpenVino environment to use the NCS2 YOLO Handler.", logger_name="vision_yolo")
-    raise
 
 
 class YoloHandler():
