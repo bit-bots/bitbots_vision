@@ -429,11 +429,11 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
             if _transfer_color_space_data is not None:
                 # Copy data from shared memory
                 with self._transfer_color_space_data_mutex:
-                    data = deepcopy(_transfer_color_space_data)
+                    data = _transfer_color_space_data
                     _transfer_color_space_data = None
 
-                # Decode color space message
-                self._decode_color_space(data)
+                    # Decode color space message
+                    self._decode_color_space(data)
 
             global _dyn_color_space
             color_space = _dyn_color_space
@@ -462,14 +462,14 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         # Create temporary color space
         # Use the base color space as basis
         global _base_color_space
-        color_space_temp = np.copy(_base_color_space)
+        new_color_space = np.copy(_base_color_space)
 
         # Adds new colors to that color space
-        color_space_temp[
+        new_color_space[
             msg.blue,
             msg.green,
             msg.red] = 1
 
         # Switches the reference to the new color space
         global _dyn_color_space
-        _dyn_color_space = color_space_temp
+        _dyn_color_space = new_color_space
