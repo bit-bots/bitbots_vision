@@ -3,6 +3,7 @@
 vision_parallelize: true  # Run the neural net and the conventional part in parallel
 vision_blind_threshold: 30  # Brightness threshold under which the vision thinks, that someone forgot the camera cap
 
+ROS_audio_msg_topic: 'speak'  # ROS topic of the audio message
 ROS_img_msg_topic: 'image_raw'  # ROS topic of the image message
 ROS_img_msg_queue_size: 1  # ROS queue size for the image message
 ROS_fcnn_img_msg_topic: 'fcnn_image'  # ROS topic of the fcnn output message
@@ -23,7 +24,7 @@ ROS_dynamic_color_space_field_mask_image_msg_topic: 'dynamic_field_mask'  # ROS 
 
 fcnn_model_path: '2019_06_timon_basler'  # Name of the ball fcnn model
 yolo_darknet_model_path: '2019_07_03_jonas_yolo'  # Name of the yolo model
-yolo_openvino_model_path: '2020_02_flo_yolo_openvino'  # Name of the yolo model
+yolo_openvino_model_path: '2020_11_12_flo_yolo_openvino'  # Name of the yolo model
 yolo_nms_threshold: 0.4  # Non maximum suppression threshold
 yolo_confidence_threshold: 0.5  # Yolo: confidence threshold
 
