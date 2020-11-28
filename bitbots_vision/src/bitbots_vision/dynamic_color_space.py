@@ -45,7 +45,7 @@ class DynamicColorSpace:
         # Init params
         self._vision_config = {}
         self._max_fps = None
-        self._last_time = 0  # Time since we have received the last image
+        self._last_time = rospy.get_rostime()  # Time since we have received the last image
 
         # Publisher placeholder
         self._pub_color_space = None
