@@ -170,8 +170,8 @@ class Vision:
 
         if self._config['imagetagger_annotations']:
             field_boundary_points = self._field_boundary_detector.get_convex_field_boundary_points()
-            field_boundary_points_serialized = ','.join([f'x{index}: {int(point[0])}, y{index}: {int(point[0])},' for index, point in enumerate(field_boundary_points)])
-            imagetagger_input_format_string = f"{image_path[0:-4]}|field edge|{field_boundary_points_serialized}"
+            field_boundary_points_serialized = ','.join([f'x{index}: {int(point[0])}, y{index}: {int(point[0])}' for index, point in enumerate(field_boundary_points)])
+            imagetagger_input_format_string = f"{image_path[0:-4]}|field edge|{{{field_boundary_points_serialized}}}"
             with open(self.labels_dir + "imagetagger_upload_annotations.dat", 'a') as f:
                 f.write(f"{imagetagger_input_format_string}\n")
 
