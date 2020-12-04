@@ -65,15 +65,19 @@ class Vision:
 
         procs = []
 
-        for ds_root in dataset_roots:
-            proc = multiprocessing.Process(target=self._handle_dataset, args=[ds_root, default_config])
-            procs.append(proc)
-            proc.start()
-            if not default_config['parallel']:
-                proc.join()
 
-        for proc in procs:
-            proc.join()
+
+        if default_config['parallel']:
+            for ds_root in dataset_roots:
+                proc = multiprocessing.Process(target=self._handle_dataset, args=[ds_root, default_config])
+                procs.append(proc)
+                proc.start()
+
+            for proc in procs:
+                proc.join()
+        else:
+            for ds_root in dataset_roots:
+                self._handle_dataset(ds_root, default_config)
 
     def _handle_dataset(self, ds_root, default_config):
         devider = "~"*100
@@ -103,6 +107,7 @@ class Vision:
 
         # Load images and generate labels and debug images
         image_files = glob.glob(f"{self.image_dir}*.jpg") + glob.glob(f"{self.image_dir}*.png")
+        print(image_files)
         for image_file in sorted(image_files):
             print(f"Loading image file at'{image_file}'...")
             self._handle_image(image_file)
