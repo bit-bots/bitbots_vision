@@ -165,7 +165,7 @@ class NeuralFieldColorDetector(ColorDetector):
     """
     Color detector which masks the field using a neural network.
     """
-    def __init__(self, config, model_path, key):
+    def __init__(self, config, model_path):
         # type: (dict, str) -> None
         self._model_path = model_path
 
