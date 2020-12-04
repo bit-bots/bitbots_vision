@@ -57,6 +57,8 @@ dataset_roots: [
   #  "/srv/ssd_nvm/deep_field/data/group1/607",
 
 
+neural_field_detection: true
+neural_field_color_detector_model_path: "/srv/ssd_nvm/deep_field/models/24_03_20/mobilenet_segnet"
 field_boundary_mask: "convex"
-lines: true
+lines: false
 lines_hsv: false

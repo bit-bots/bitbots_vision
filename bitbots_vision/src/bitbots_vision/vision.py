@@ -28,8 +28,11 @@ class Vision:
     def _configure_vision(self, config):
         self._label_drawer = debug.DebugImage()
 
-        # Set the static field color detector
-        self._field_color_detector = color.PixelListColorDetector(config, "field_color_detector_path")
+        if config['neural_field_detection']:
+            self._field_color_detector = color.NeuralFieldColorDetector(config, config['neural_field_color_detector_model_path'])
+        else:
+            # Set the static field color detector
+            self._field_color_detector = color.PixelListColorDetector(config, "field_color_detector_path")
 
         # Set the static line color detector
         self._line_color_detector = color.PixelListColorDetector(config, "line_color_detector_path")

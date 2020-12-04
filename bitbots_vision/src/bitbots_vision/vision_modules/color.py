@@ -6,6 +6,11 @@ import VisionExtensions
 import numpy as np
 import os
 
+try:
+    from keras_segmentation.predict import predict as inference
+except ModuleNotFound:
+    print("Keras segmentation import failed. Neural field color detector is now unavalabile!")
+
 class ColorDetector(object):
     """
     ColorDetector is abstract super-class of specialized sub-classes.
@@ -154,6 +159,18 @@ class ColorDetector(object):
         :return: None
         """
         self.get_mask_image()
+
+
+class NeuralFieldColorDetector(ColorDetector):
+    """
+    Color detector which masks the field using a neural network.
+    """
+    def __init__(self, config, model_path, key):
+        # type: (dict, str) -> None
+        self._model_path = model_path
+
+    def _mask_image(self, image):
+        return inference(checkpoints_path=self._model_path,  inp=image)
 
 
 class HsvSpaceColorDetector(ColorDetector):
