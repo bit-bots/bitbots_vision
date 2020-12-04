@@ -85,7 +85,7 @@ class Vision:
 
         # Generating dataset paths
         self.config_path = os.path.join(ds_root, "config.yaml")
-        self.image_dir = os.path.join(ds_root, "images/")
+        self.image_dir = ds_root
         self.labels_dir = os.path.join(ds_root, "labels/")
         self.debug_dir = os.path.join(ds_root, "debug/")
 
