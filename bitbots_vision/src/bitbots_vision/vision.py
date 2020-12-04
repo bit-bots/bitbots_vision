@@ -69,6 +69,8 @@ class Vision:
             proc = multiprocessing.Process(target=self._handle_dataset, args=[ds_root, default_config])
             procs.append(proc)
             proc.start()
+            if not default_config['parallel']:
+                proc.join()
 
         for proc in procs:
             proc.join()
