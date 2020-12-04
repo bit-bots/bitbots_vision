@@ -32,6 +32,7 @@ line_detector_linepoints_range: 10000  # Number of line points
 ###############
 
 dataset_roots: [
+  "/srv/ssd_nvm/deep_field/data/group_test/14",
   "/srv/ssd_nvm/deep_field/data/group1/638",
   "/srv/ssd_nvm/deep_field/data/group1/639",
   "/srv/ssd_nvm/deep_field/data/group1/608",
@@ -62,3 +63,6 @@ neural_field_color_detector_model_path: "/srv/ssd_nvm/deep_field/models/24_03_20
 field_boundary_mask: "convex"
 lines: false
 lines_hsv: false
+masks: false
+debug: true
+imagetagger_annotations: true

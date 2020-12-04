@@ -128,22 +128,26 @@ class Vision:
 
         self._field_color_detector.compute()
 
-        # Handle field boundary
-        field_boundary_mask = None
-        if self._config['field_boundary_mask'] == "convex":
-            field_boundary_mask = self._field_boundary_detector.get_convex_mask()
-        elif self._config['field_boundary_mask'] == "normal":
-            field_boundary_mask = self._field_boundary_detector.get_mask()
-        else:
-            print("WARNING: Unknown field_boundary_mask parameter!")
-            return
 
-        self._label_drawer.draw_mask(field_boundary_mask, (1, 1, 1), opacity=1)
-        label = self._label_drawer.get_image()
+        # Handle field boundary
+        print(self._field_boundary_detector.get_convex_field_boundary_points())
+
+        if self._config['masks']:
+            field_boundary_mask = None
+            if self._config['field_boundary_mask'] == "convex":
+                field_boundary_mask = self._field_boundary_detector.get_convex_mask()
+            elif self._config['field_boundary_mask'] == "normal":
+                field_boundary_mask = self._field_boundary_detector.get_mask()
+            else:
+                print("WARNING: Unknown field_boundary_mask parameter!")
+                return
+
+            self._label_drawer.draw_mask(field_boundary_mask, (1, 1, 1), opacity=1)
+            label = self._label_drawer.get_image()
 
 
         # Handle lines
-        if self._config['lines']:
+        if self._config['lines'] and self._config['masks']:
             self._white_color_detector.set_image(image)
             self._line_detector.set_image(image)
             self._white_color_detector.compute()
@@ -155,13 +159,15 @@ class Vision:
             self._label_drawer.draw_mask(line_mask, (2, 2, 2), opacity=1)
             label = self._label_drawer.get_image()
 
-        cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", label)
+        if self._config['masks']:
+            cv2.imwrite(self.labels_dir + image_path[0:-4] + ".png", label)
 
-        self._debug_drawer.set_image(image)
-        self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.5)
-        if self._config['lines']:
-            self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.8)
-        cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
+        if self._config['debug']:
+            self._debug_drawer.set_image(image)
+            self._debug_drawer.draw_mask(field_boundary_mask, (255,0,0), opacity=0.5)
+            if self._config['lines'] and self._config['masks']:
+                self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.8)
+            cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
 
 
 if __name__ == '__main__':
