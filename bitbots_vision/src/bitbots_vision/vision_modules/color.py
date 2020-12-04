@@ -171,9 +171,10 @@ class NeuralFieldColorDetector(ColorDetector):
 
     def _mask_image(self, image):
         orininal_w, orininal_h = tuple(image.shape[:-1])
+        mask = inference(checkpoints_path=self._model_path,  inp=image).reshape(112, 112, 1).astype(np.uint8)
         return cv2.resize(
-            inference(checkpoints_path=self._model_path,  inp=image),
-            (orininal_w, orininal_h)).reshape((orininal_w, orininal_h, 1))
+            mask,
+            (orininal_w, orininal_h))
 
 
 class HsvSpaceColorDetector(ColorDetector):
