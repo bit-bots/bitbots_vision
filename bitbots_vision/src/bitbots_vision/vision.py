@@ -132,7 +132,7 @@ class Vision:
         # Handle field boundary
         print(self._field_boundary_detector.get_convex_field_boundary_points())
 
-        if self._config['masks']:
+        if self._config['masks'] or self._config['debug']:
             field_boundary_mask = None
             if self._config['field_boundary_mask'] == "convex":
                 field_boundary_mask = self._field_boundary_detector.get_convex_mask()
