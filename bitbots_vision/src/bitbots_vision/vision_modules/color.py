@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 try:
-    from keras_segmentation.predict import predict as inference
+    from keras_segmentation.predict import predict, model_from_checkpoint_path
 except ModuleNotFound:
     print("Keras segmentation import failed. Neural field color detector is now unavalabile!")
 
@@ -167,11 +167,11 @@ class NeuralFieldColorDetector(ColorDetector):
     """
     def __init__(self, config, model_path):
         # type: (dict, str) -> None
-        self._model_path = model_path
+        self._model = model_from_checkpoint_path(model_path)
 
     def _mask_image(self, image):
         orininal_w, orininal_h = tuple(image.shape[:-1])
-        mask = inference(checkpoints_path=self._model_path,  inp=image).reshape(112, 112, 1).astype(np.uint8)
+        mask = predict(model=self._model,  inp=image).reshape(112, 112, 1).astype(np.uint8)
         return cv2.resize(
             mask,
             (orininal_w, orininal_h))
