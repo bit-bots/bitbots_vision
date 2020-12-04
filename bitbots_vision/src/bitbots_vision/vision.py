@@ -130,8 +130,6 @@ class Vision:
 
 
         # Handle field boundary
-        print(self._field_boundary_detector.get_convex_field_boundary_points())
-        print(self._field_boundary_detector.get_field_boundary_points())
 
         if self._config['masks'] or self._config['debug']:
             field_boundary_mask = None
@@ -169,6 +167,14 @@ class Vision:
             if self._config['lines'] and self._config['masks']:
                 self._debug_drawer.draw_mask(line_mask, (168, 50, 162), opacity=0.8)
             cv2.imwrite(self.debug_dir + image_path[0:-4] + ".png", self._debug_drawer.get_image())
+
+        if self._config['imagetagger_annotations']:
+            field_boundary_points = self._field_boundary_detector.get_convex_field_boundary_points()
+            field_boundary_points_serialized = ','.join([f'x{index}: {int(point[0])}, y{index}: {int(point[0])},' for index, point in enumerate(field_boundary_points)])
+            imagetagger_input_format_string = f"{image_path[0:-4]}|field edge|{field_boundary_points_serialized}"
+            with open(self.labels_dir + "imagetagger_upload_annotations.dat", 'a') as f:
+                f.write(f"{imagetagger_input_format_string}\n")
+
 
 
 if __name__ == '__main__':
