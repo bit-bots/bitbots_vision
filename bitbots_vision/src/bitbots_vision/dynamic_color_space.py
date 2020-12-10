@@ -26,7 +26,7 @@ class DynamicColorSpace:
         DynamicColorSpace is able to calculate dynamically changing color spaces to accommodate e.g.
         changing lighting conditions or to compensate for not optimized base color space files.
 
-        This node subscribes to an Image-message (default: image_raw) and to the 'vision_config'-message.
+        This node subscribes to an Image-message (default: camera/image_proc) and to the 'vision_config'-message.
         This node publishes ColorSpace-messages.
 
         Initiating 'bitbots_dynamic_color_space' node.
@@ -44,6 +44,8 @@ class DynamicColorSpace:
 
         # Init params
         self._vision_config = {}
+        self._max_fps = None
+        self._last_time = rospy.get_rostime()  # Time since we have received the last image
 
         # Publisher placeholder
         self._pub_color_space = None
@@ -83,6 +85,10 @@ class DynamicColorSpace:
                 rospy.loginfo('Dynamic color space turned ON.', logger_name="dynamic_color_space")
             else:
                 rospy.logwarn('Dynamic color space turned OFF.', logger_name="dynamic_color_space")
+
+        if ros_utils.config_param_change(self._vision_config, vision_config, 'dynamic_color_space_max_fps'):
+            self._max_fps = vision_config['dynamic_color_space_max_fps']
+            self._last_time = rospy.get_rostime()
 
         # Set publisher of ColorSpace-messages
         self._pub_color_space = ros_utils.create_or_update_publisher(self._vision_config, vision_config, self._pub_color_space, 'ROS_dynamic_color_space_msg_topic', ColorSpace)
@@ -145,9 +151,15 @@ class DynamicColorSpace:
         # Drops old images
         image_age = rospy.get_rostime() - image_msg.header.stamp
         if 1.0 < image_age.to_sec() < 1000.0:
-            rospy.logwarn('Vision: Dropped incoming Image-message, because its too old! ({} sec)'.format(image_age.to_sec()),
-                          logger_throttle=2, logger_name="dynamic_color_space")
+            rospy.logwarn(f"Vision: Dropped incoming Image-message, because its too old! ({image_age.to_sec()} sec)",
+                            logger_name="dynamic_color_space")
             return
+
+        # Skip images to constrain node to maximum FPS
+        time = rospy.get_rostime()
+        if self._max_fps == 0.0 or (time - self._last_time).to_sec() < (1 / self._max_fps):
+            return
+        self._last_time = time
 
         self._handle_image(image_msg)
 
@@ -234,7 +246,7 @@ class DynamicColorSpace:
         """
         Publishes the current color space via ColorSpace-message.
 
-        :param Image image_msg: 'image_raw'-message
+        :param Image image_msg: 'camera/image_proc'-message
         :return: None
         """
         # Get color space from queue

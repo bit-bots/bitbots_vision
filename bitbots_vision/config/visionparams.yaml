@@ -3,7 +3,8 @@
 vision_parallelize: true  # Run the neural net and the conventional part in parallel
 vision_blind_threshold: 30  # Brightness threshold under which the vision thinks, that someone forgot the camera cap
 
-ROS_img_msg_topic: 'image_raw'  # ROS topic of the image message
+ROS_audio_msg_topic: 'speak'  # ROS topic of the audio message
+ROS_img_msg_topic: 'camera/image_proc'  # ROS topic of the image message
 ROS_img_msg_queue_size: 1  # ROS queue size for the image message
 ROS_fcnn_img_msg_topic: 'fcnn_image'  # ROS topic of the fcnn output message
 ROS_field_boundary_msg_topic: 'field_boundary_in_image'  # ROS topic of the field boundary message
@@ -47,6 +48,7 @@ field_color_detector_path: 'basler_f031.pickle'  # Color space for the field col
 field_color_detector_use_hsv: false
 
 dynamic_color_space_active: true  # Turn dynamic color space ON or OFF
+dynamic_color_space_max_fps: 1.0  # Maximum FPS of the dynamic color space node
 dynamic_color_space_queue_max_size: 20  # Maximum size of queue that holds the latest added colors
 dynamic_color_space_threshold: 0.55  # Necessary amount of previously detected color inside the kernel in percentage
 dynamic_color_space_kernel_radius: 1  # Radius surrounding the center-element of kernel-matrix, defines relevant surrounding of pixel

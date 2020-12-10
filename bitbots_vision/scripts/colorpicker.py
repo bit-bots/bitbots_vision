@@ -26,7 +26,7 @@ class Colorpicker(object):
 
         # Subscribe to Image-message
         self._sub_image_msg = rospy.Subscriber(
-            "image_raw",
+            "camera/image_proc",
             Image,
             self._image_callback,
             queue_size=1,
@@ -227,8 +227,7 @@ class Colorpicker(object):
         Saves the current colorspace in a pickle file.
         """
         # Get user input
-        input_path = input( "Press enter to save color space file to '{}' "
-                            "or enter output file path: ".format(self._default_path))
+        input_path = input(f"Press ENTER to save color space file to '{self._default_path}'\nor enter output file path: ")
 
         # Check if the user entered something
         if input_path == "":
@@ -252,7 +251,7 @@ class Colorpicker(object):
         with open(input_path, 'wb') as outfile:
             pickle.dump(data, outfile, protocol=2)
 
-        rospy.loginfo("Output saved to '{}'.".format(input_path), logger_name="colorpicker")
+        rospy.loginfo(f"Output saved to '{input_path}'.", logger_name="colorpicker")
 
     def run(self):
         """
