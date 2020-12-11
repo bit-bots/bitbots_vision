@@ -58,14 +58,11 @@ class ImageMeasurement(object):
 
 class Evaluator(object):
     def __init__(self):
-        self._set_sim_time_param()
         rospy.init_node("bitbots_vision_evaluator")
 
-        self._set_sim_time_param()
         self._evaluated_classes = list()
 
-        # Subscribe to all vision outputs
-
+        # Subscribe to vision output topics
         self._ball_sub = None
         if rospy.get_param("~listen_balls", False):
             rospy.loginfo('listening for balls in image...')
@@ -120,7 +117,7 @@ class Evaluator(object):
 
         # make image publisher
         self._image_pub = rospy.Publisher(
-            rospy.get_param("~image_publish_topic", "image_raw"), 
+            rospy.get_param("~image_publish_topic", "/camera/image_proc"), 
             Image, 
             queue_size=1, 
             latch=True)
@@ -130,12 +127,9 @@ class Evaluator(object):
         self._image_path = rospy.get_param("~folder_path")
         self._line_thickness = rospy.get_param("~line_thickness")
 
-        # Enfore wall clock
-        self._set_sim_time_param()
-
         self.bridge = CvBridge()
 
-        # Stores the messurement envs (ImageMeasurement) containing labels and metris for each image ()
+        # Stores the measurement envs (ImageMeasurement) containing labels and metrics for each image
         self._measurements = dict()
 
         # Stop-Stuff
@@ -145,16 +139,16 @@ class Evaluator(object):
 
         # Read label YAML file
         self._label_filename = rospy.get_param('~label_file_name')
-        rospy.loginfo('Reading label-file \"{}\"...'.format(self._label_filename))
+        rospy.loginfo(f"Reading label-file '{self._label_filename}'...")
         # Read labels (sort out usw.)
         self._images = self._read_labels(self._label_filename)
         rospy.loginfo('Done reading label-file.')
         # An unforgivable curse to differ between robot colors based on blurred/concealed/...
         self._classify_robots()
         # Filter and format labels
-        rospy.loginfo('Validating labels of {} images...'.format(len(self._images)))
+        rospy.loginfo(f'Validating labels of {len(self._images)} images...')
         self._images = self._analyze_labels(self._images)
-        rospy.loginfo('Labels of {} images are valid'.format(len(self._images)))
+        rospy.loginfo(f'Labels of {len(self._images)} images are valid')
 
         # Init image counter and set the image send time
         self._current_image_counter = 0 
@@ -191,14 +185,14 @@ class Evaluator(object):
             rospy.signal_shutdown('killed.')
             sys.exit(0)
 
-        # Is raised if we didnt process a image in 2 Seconds. 
-        # This is the case if we havent got all responses and therefore are not sending the new image for 2 Seconds 
+        # Is raised, if we did not process a image in 2 seconds.
+        # This is the case if we have not got all responses and therefore are not sending the new image for 2 Seconds
         timeout = (rospy.Time.now() - self._image_send_time).to_sec() > 2.0
-        if timeout: rospy.logwarn("Stoped waiting for responses. Maybe some detections are lost")
+        if timeout: rospy.logwarn("Stopped waiting for responses. Maybe some detections are lost")
 
         # Check if the timeout is due or if all desired responses have been collected and processed. 
         # It also skips if a lock is present
-        if (self._recieved_all_messages_for_image(self._current_image_counter) or timeout) and not self._lock:
+        if (self._received_all_messages_for_image(self._current_image_counter) or timeout) and not self._lock:
             # Increse image counter
             self._current_image_counter += 1
             # Reset timeout timer
@@ -237,7 +231,7 @@ class Evaluator(object):
         imgpath = os.path.join(self._image_path, name)
         image = cv2.imread(imgpath)
         if image is None:
-            rospy.logwarn('Could not open image {} at path {}'.format(name, self._image_path))
+            rospy.logwarn(f'Could not open image {name} at path {self._image_path}')
             return
 
 
@@ -256,7 +250,7 @@ class Evaluator(object):
         image = cv2.resize(image, tuple(np.flip(self._image_shape)), interpolation=3)
 
         # Building and sending message
-        rospy.loginfo('Sending image {} of {} (starting by 0).'.format(self._current_image_counter, self._image_count))
+        rospy.loginfo(f'Sending image {self._current_image_counter} of {self._image_count} (starting by 0).')
         msg = self.bridge.cv2_to_imgmsg(image, 'bgr8')
         msg.header.stamp = rospy.Time.now()
         # The second unforgivable curse. 
@@ -275,7 +269,7 @@ class Evaluator(object):
         filepath = os.path.join(self._image_path, filename)
         images = None
         if not os.path.isfile(filepath):
-            rospy.logerr('File at path \'{}\' not found!'.format(filepath))
+            rospy.logerr(f"File at path '{filepath}' not found!")
             return
         pickle_filepath = filepath + '.pickle'
         if not os.path.isfile(pickle_filepath):
@@ -302,7 +296,7 @@ class Evaluator(object):
         Reads the mesurement env for a specific image
         """
         if image_id not in self._measurements.keys():
-            rospy.logerr('got an unknown image with seq {}! Is there a ROS-bag running? Stop it please!'.format(image_sequence))
+            rospy.logerr(f'got an unknown image with seq {image_sequence}! Is there a ROS-bag running? Stop it please!')
             return
         return self._measurements[image_id]
 
@@ -577,9 +571,9 @@ class Evaluator(object):
         rates['dn'] = 1 - rates['dp']  # because all the other pixels have to be negative
         return rates
 
-    def _recieved_all_messages_for_image(self, image_seq):
+    def _received_all_messages_for_image(self, image_seq):
         """
-        Checks if we recived a message from every class for a given image
+        Checks if we received a message from every class for a given image
         """
         while self._lock:
             time.sleep(.05)
@@ -639,12 +633,12 @@ class Evaluator(object):
                 # Check for contrediction in image notations
                 if in_image[annotation['type']] == True:
                     if not annotation['in']:  # contradiction!
-                        rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
+                        rospy.logwarn(f"Found contradicting labels of type {annotation['type']} in image '{image['name']}'! The image will be removed!")
                         add_image = False
                         break
                 elif in_image[annotation['type']]  == False:
                     if annotation['in']:  # contradiction!
-                        rospy.logwarn('Found contradicting labels of type {} in image \"{}\"! The image will be removed!'.format(annotation['type'], image['name']))
+                        rospy.logwarn(f"Found contradicting labels of type {annotation['type']} in image '{image['name']}'! The image will be removed!")
                         add_image = False
                         break
                 else:  # it is None and therefor not set yet
@@ -690,8 +684,8 @@ class Evaluator(object):
         serialized_measurements = [measurement.serialize() for measurement in self._measurements.values()]
         
         # Save them is a YAML file
-        rospy.loginfo('Writing {} measurements to file...'.format(len(serialized_measurements)))
         filepath = rospy.get_param('~output_file_path', '/tmp/data.yaml')
+        rospy.loginfo(f"Writing {len(serialized_measurements)} measurements to file '{filepath}'...")
         with open(filepath, 'w') as outfile:
             yaml.dump(serialized_measurements, outfile)
         rospy.loginfo('Done writing to file.')
@@ -707,7 +701,7 @@ class Evaluator(object):
         for iou_class in self._evaluated_classes:
             class_evals = [ev[iou_class] for ev in evaluations_by_class if ev and iou_class in ev.keys()]
             ious = [measurement['pixel_mask_rates']['iou'] for measurement in class_evals if measurement]
-            rospy.loginfo('{}: {}'.format(iou_class, sum(ious) / float(len(ious))))
+            rospy.loginfo(f'{iou_class}: {sum(ious) / float(len(ious)}')
 
     def _classify_robots(self):
         """
@@ -724,15 +718,6 @@ class Evaluator(object):
                         annotation['type'] = 'robot_blue'
                     else:
                         annotation['type'] = 'obstacle'
-
-    def _set_sim_time_param(self):
-        """
-        Strictly enforces the sim time.
-        Also set in launchfile, but maybe niclas had its reasons
-        """
-        if rospy.get_param('/use_sim_time'):
-            print('Set /use_sim_time to false...')
-            rospy.set_param('/use_sim_time', False)
 
 if __name__ == "__main__":
     Evaluator()
