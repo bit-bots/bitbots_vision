@@ -8,6 +8,7 @@
 # 1 -> move current image to $Trash subdirectory
 # 2 -> Move current image to $Balls subdirectory
 # 3 -> Move current image to $Goals subdirectory
+# use right/left arrow keys to leave image inside of main directory
 
 Trash="unusable"
 Balls="balls"
