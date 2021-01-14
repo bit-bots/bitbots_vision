@@ -14,7 +14,7 @@ Select image sets
 Since image sets and annotations are constantly added, it is hard to give an up to date list of which image sets make sense to use for your training.
 An example of image sets that you could use for training of balls and goalposts is the following list:
 
-``160  184  186  189  261  607  609  611  613  615  160  184  186  189  261  607  609  611  613  615``
+``160  184  186  189  261  607  609  611  613  615  160  184  186  189  607  609  611  613  615``
 
 To find these image sets you can replace [id] in the following link with the id you want to open:
 
