@@ -4,7 +4,7 @@ How to train YOLO
 
 We currently use YOLO as our neural network for ball and goalpost detection.
 We are considering to use more classes e.g. robots, but you should be mostly fine to just follow this tutorial even after those changes.
-Our images and annotations are from the ImageTagger.
+Our images and annotations are from the `ImageTagger <https://imagetagger.bit-bots.de>`_.
 
 After following this tutorial you should have a trained YOLO network that is able to detect balls and goalposts at a decent framerate in the RoboCup Soccer context.
 
