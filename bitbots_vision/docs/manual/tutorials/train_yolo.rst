@@ -44,8 +44,12 @@ For our approach we use ``Bit-Bots/goalpostBallToYaml``.
 Now you have to go to each image set you selected and select the format and press ``export``.
 After a short loading time your new export will show up on the right.
 You should download this and preferably name it <id>.yaml
-These yamls then have to be transferred to the work station and put into the folder as the image set with the same id.
-You can then use the ``createYoloLabels.py`` script provided in the ``AutoImageLabeler`` repository.
+These yamls then have to be transferred to the work station and put into the folder with the images for the image set with the same id.
+You can then use the `createYoloLabels.py
+<https://github.com/bit-bots/AutoImageLabeler/blob/master/yolo/createYoloLabels.py>`_
+script provided in the `AutoImageLabeler
+<https://github.com/bit-bots/AutoImageLabeler>`_
+repository.
 
 Train YOLO
 ----------
