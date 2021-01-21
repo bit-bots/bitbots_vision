@@ -44,7 +44,7 @@ For our approach we use ``Bit-Bots/goalpostBallToYaml``.
 Now you have to go to each image set you selected and select the format and press ``export``.
 After a short loading time your new export will show up on the right.
 You should download this and preferably name it <id>.yaml
-These yamls then have to be transferred to the work station and put into the folder with the images for the image set with the same id.
+These yamls then have to be transferred to the work station and put into the folder as the image set with the same id.
 You can then use the `createYoloLabels.py
 <https://github.com/bit-bots/AutoImageLabeler/blob/master/yolo/createYoloLabels.py>`_
 script provided in the `AutoImageLabeler
@@ -59,6 +59,6 @@ Now we have prepared everything and can now start training the YOLO.
 For these steps you can just follow the guide provided in the `official repository
 <https://github.com/AlexeyAB/darknet#how-to-train-tiny-yolo-to-detect-your-custom-objects>`_.
 In the end you will find a trained yolo in the backup folder of your darknet directory.
-If you want to use the OpenVINO toolkit to execute the YOLO like we do, you should have a look at
+If you want to use the OpenVINO toolkit to execute the YOLO on the Intel Neural Compute Stick2 like we do, you should have a look at
 :doc:`OpenVINO <../yolo_open_vino.rst>`
 Congrats, you have successfully trained a YOLO for the RoboCup Soccer context.
