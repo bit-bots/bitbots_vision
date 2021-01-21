@@ -17,7 +17,7 @@ from humanoid_league_msgs.msg import BallInImageArray, LineInformationInImage, \
 from bitbots_vision.vision_modules import lines, field_boundary, color, debug, \
     fcnn_handler, live_fcnn_03, obstacle, yolo_handler, ros_utils, candidate
 from bitbots_vision.cfg import VisionConfig
-from bitbots_msgs.msg import Config, ColorSpace
+from bitbots_msgs.msg import Config, ColorLookupTable
 try:
     from profilehooks import profile, timecall # Profilehooks profiles certain functions in you add the @profile or @timecall decorator.
 except ImportError:
@@ -49,6 +49,7 @@ class Vision:
         self._config = {}
 
         # Publisher placeholder
+        self._pub_audio = None
         self._pub_balls = None
         self._pub_lines = None
         self._pub_line_mask = None
@@ -62,25 +63,22 @@ class Vision:
         self._pub_red_mask_image = None
         self._pub_blue_mask_image = None
         self._pub_field_mask_image = None
-        self._pub_dynamic_color_space_field_mask_image = None
+        self._pub_dynamic_color_lookup_table_field_mask_image = None
 
         # Subscriber placeholder
         self._sub_image = None
-        self._sub_dynamic_color_space_msg_topic = None
+        self._sub_dynamic_color_lookup_table_msg_topic = None
 
         self._debug_image_creator = debug.DebugImage()
 
         # Register static publishers
         # Register publisher of 'vision_config'-messages
-        # For changes of topic name: also change topic name in dynamic_color_space.py
+        # For changes of topic name: also change topic name in dynamic_color_lookup_table.py
         self._pub_config = rospy.Publisher(
             'vision_config',
             Config,
             queue_size=1,
             latch=True)
-
-        # Speak publisher
-        self._speak_publisher = rospy.Publisher('/speak', Audio, queue_size=10)
 
         # Needed for operations that should only be executed on the first image
         self._first_image_callback = True
@@ -93,9 +91,12 @@ class Vision:
         self._transfer_image_msg = None
         self._transfer_image_msg_mutex = Lock()
 
+        # Yolo placeholder
+        self._yolo = None
+
         # Add model enums to _config
         ros_utils.add_model_enums(VisionConfig, self._package_path)
-        ros_utils.add_color_space_enum(VisionConfig, self._package_path)
+        ros_utils.add_color_lookup_table_enum(VisionConfig, self._package_path)
 
         # Register VisionConfig server (dynamic reconfigure) and set callback
         srv = Server(VisionConfig, self._dynamic_reconfigure_callback)
@@ -167,7 +168,7 @@ class Vision:
         # Maximum offset for balls over the convex field boundary
         self._goal_post_field_boundary_y_offset = config['goal_post_field_boundary_y_offset']
 
-        self._use_dynamic_color_space = config['dynamic_color_space_active']
+        self._use_dynamic_color_lookup_table = config['dynamic_color_lookup_table_active']
 
         # Which line type should we publish?
         self._use_line_points = config['line_detector_use_line_points']
@@ -205,18 +206,18 @@ class Vision:
             else:
                 rospy.loginfo('HSV mask image publishing is disabled', logger_name="vision_hsv_color_detector")
 
-        # Should the (dynamic color space-) field mask image be published?
+        # Should the (dynamic color lookup table-) field mask image be published?
         if ros_utils.config_param_change(self._config, config, 'vision_publish_field_mask_image'):
             self._publish_field_mask_image = config['vision_publish_field_mask_image']
             if self._publish_field_mask_image:
-                rospy.loginfo('(Dynamic color space-) Field mask image publishing is enabled', logger_name="dynamic_color_space")
+                rospy.loginfo('(Dynamic color lookup table-) Field mask image publishing is enabled', logger_name="dynamic_color_lookup_table")
             else:
-                rospy.loginfo('(Dynamic color space-) Field mask image publishing is disabled', logger_name="dynamic_color_space")
+                rospy.loginfo('(Dynamic color lookup table-) Field mask image publishing is disabled', logger_name="dynamic_color_lookup_table")
 
         # Set the white color detector
         if ros_utils.config_param_change(self._config, config, r'^white_color_detector_'):
-            if config['white_color_detector_use_color_space']:
-                self._white_color_detector = color.PixelListColorDetector(config, self._package_path, 'white_color_detector_color_space_path')
+            if config['white_color_detector_use_color_lookup_table']:
+                self._white_color_detector = color.PixelListColorDetector(config, self._package_path, 'white_color_detector_color_lookup_table_path')
             else:
                 self._white_color_detector = color.HsvSpaceColorDetector(config, "white")
 
@@ -230,19 +231,19 @@ class Vision:
 
         # Check if params changed
         if ros_utils.config_param_change(self._config, config,
-                r'^field_color_detector_|dynamic_color_space_') and not config['field_color_detector_use_hsv']:
-            # Check if the dynamic color space field color detector or the static field color detector should be used
-            if self._use_dynamic_color_space:
-                # Set dynamic color space field color detector
+                r'^field_color_detector_|dynamic_color_lookup_table_') and not config['field_color_detector_use_hsv']:
+            # Check if the dynamic color lookup table field color detector or the static field color detector should be used
+            if self._use_dynamic_color_lookup_table:
+                # Set dynamic color lookup table field color detector
                 self._field_color_detector = color.DynamicPixelListColorDetector(
                     config,
                     self._package_path)
             else:
-                self._use_dynamic_color_space = False
+                self._use_dynamic_color_lookup_table = False
                 # Unregister old subscriber
-                if self._sub_dynamic_color_space_msg_topic is not None:
-                    # self._sub_dynamic_color_space_msg_topic.unregister()  # Do not use this method, does not work
-                    self._sub_dynamic_color_space_msg_topic = None
+                if self._sub_dynamic_color_lookup_table_msg_topic is not None:
+                    # self._sub_dynamic_color_lookup_table_msg_topic.unregister()  # Do not use this method, does not work
+                    self._sub_dynamic_color_lookup_table_msg_topic = None
                 # Set the static field color detector
                 self._field_color_detector = color.PixelListColorDetector(
                     config,
@@ -251,12 +252,12 @@ class Vision:
         # Check if params changed
         if ros_utils.config_param_change(self._config, config,
                 r'^field_color_detector_|field_color_detector_use_hsv') and config['field_color_detector_use_hsv']:
-            # Deactivate dynamic color space
-            self._use_dynamic_color_space = False
+            # Deactivate dynamic color lookup table
+            self._use_dynamic_color_lookup_table = False
             # Unregister old subscriber
-            if self._sub_dynamic_color_space_msg_topic is not None:
-                # self._sub_dynamic_color_space_msg_topic.unregister()  # Do not use this method, does not work
-                self._sub_dynamic_color_space_msg_topic = None
+            if self._sub_dynamic_color_lookup_table_msg_topic is not None:
+                # self._sub_dynamic_color_lookup_table_msg_topic.unregister()  # Do not use this method, does not work
+                self._sub_dynamic_color_lookup_table_msg_topic = None
 
             # Override field color hsv detector
             self._field_color_detector = color.HsvSpaceColorDetector(config, "field")
@@ -343,7 +344,7 @@ class Vision:
 
         # Check if  tpu version of yolo ball/goalpost detector is used
         if config['neural_network_type'] in ['yolo_ncs2']:
-            if ros_utils.config_param_change(self._config, config, ['neural_network_type']):
+            if ros_utils.config_param_change(self._config, config, ['neural_network_type', 'yolo_openvino_model_path']):
                 # Build absolute model path
                 yolo_openvino_model_path = os.path.join(self._package_path, 'models', config['yolo_openvino_model_path'])
                 # Check if it exists
@@ -371,7 +372,7 @@ class Vision:
             self._line_detector,
         ]
 
-        # Publish Config-message (mainly for the dynamic color space node)
+        # Publish Config-message (mainly for the dynamic color lookup table node)
         ros_utils.publish_vision_config(config, self._pub_config)
 
         # The old _config gets replaced with the new _config
@@ -386,6 +387,7 @@ class Vision:
         :param dict config: new, incoming _config
         :return: None
         """
+        self._pub_audio = ros_utils.create_or_update_publisher(self._config, config, self._pub_audio, 'ROS_audio_msg_topic', Audio, queue_size=10)
         self._pub_balls = ros_utils.create_or_update_publisher(self._config, config, self._pub_balls, 'ROS_ball_msg_topic', BallInImageArray)
         self._pub_lines = ros_utils.create_or_update_publisher(self._config, config, self._pub_lines, 'ROS_line_msg_topic', LineInformationInImage, queue_size=5)
         self._pub_line_mask = ros_utils.create_or_update_publisher(self._config, config, self._pub_line_mask, 'ROS_line_mask_msg_topic', Image)
@@ -399,7 +401,7 @@ class Vision:
         self._pub_red_mask_image = ros_utils.create_or_update_publisher(self._config, config, self._pub_red_mask_image, 'ROS_red_HSV_mask_image_msg_topic', Image)
         self._pub_blue_mask_image = ros_utils.create_or_update_publisher(self._config, config, self._pub_blue_mask_image, 'ROS_blue_HSV_mask_image_msg_topic', Image)
         self._pub_field_mask_image = ros_utils.create_or_update_publisher(self._config, config, self._pub_field_mask_image, 'ROS_field_mask_image_msg_topic', Image)
-        self._pub_dynamic_color_space_field_mask_image = ros_utils.create_or_update_publisher(self._config, config, self._pub_dynamic_color_space_field_mask_image, 'ROS_dynamic_color_space_field_mask_image_msg_topic', Image)
+        self._pub_dynamic_color_lookup_table_field_mask_image = ros_utils.create_or_update_publisher(self._config, config, self._pub_dynamic_color_lookup_table_field_mask_image, 'ROS_dynamic_color_lookup_table_field_mask_image_msg_topic', Image)
 
     def _register_or_update_all_subscribers(self, config):
         # type: (dict) -> None
@@ -411,8 +413,8 @@ class Vision:
         """
         self._sub_image = ros_utils.create_or_update_subscriber(self._config, config, self._sub_image, 'ROS_img_msg_topic', Image, callback=self._image_callback, queue_size=config['ROS_img_msg_queue_size'], buff_size=60000000) # https://github.com/ros/ros_comm/issues/536
 
-        if self._use_dynamic_color_space:
-            self._sub_dynamic_color_space_msg_topic = ros_utils.create_or_update_subscriber(self._config, config, self._sub_dynamic_color_space_msg_topic, 'ROS_dynamic_color_space_msg_topic', ColorSpace, callback=self._field_color_detector.color_space_callback, queue_size=1, buff_size=2 ** 20)
+        if self._use_dynamic_color_lookup_table:
+            self._sub_dynamic_color_lookup_table_msg_topic = ros_utils.create_or_update_subscriber(self._config, config, self._sub_dynamic_color_lookup_table_msg_topic, 'ROS_dynamic_color_lookup_table_msg_topic', ColorLookupTable, callback=self._field_color_detector.color_lookup_table_callback, queue_size=1, buff_size=2 ** 20)
 
     def _image_callback(self, image_msg):
         # type: (Image) -> None
@@ -427,8 +429,8 @@ class Vision:
         # Still accepts very old images, that are most likely from ROS bags.
         image_age = rospy.get_rostime() - image_msg.header.stamp
         if 1.0 < image_age.to_sec() < 1000.0:
-            rospy.logwarn('Vision: Dropped incoming Image-message, because its too old! ({} sec)'.format(image_age.to_sec()),
-                          logger_throttle=2, logger_name="")
+            rospy.logwarn(f"Vision: Dropped incoming Image-message, because its too old! ({image_age.to_sec()} sec)",
+                            logger_name="vision")
             return
 
         if self._transfer_image_msg_mutex.locked():
@@ -622,12 +624,12 @@ class Vision:
 
         # Check, if field mask image should be published
         if self._publish_field_mask_image:
-            if self._use_dynamic_color_space:
+            if self._use_dynamic_color_lookup_table:
                 # Mask image
                 dyn_field_mask = self._field_color_detector.get_mask_image()
                 static_field_mask = self._field_color_detector.get_static_mask_image()
                 # Publish mask image
-                self._pub_dynamic_color_space_field_mask_image.publish(
+                self._pub_dynamic_color_lookup_table_field_mask_image.publish(
                     ros_utils.build_image_msg(image_msg.header, dyn_field_mask, '8UC1'))
                 self._pub_field_mask_image.publish(
                     ros_utils.build_image_msg(image_msg.header, static_field_mask, '8UC1'))
@@ -757,7 +759,7 @@ class Vision:
         # Notify if there is a camera cap detected
         if sum(mean) < self._blind_threshold:
             rospy.logerr("Image is too dark! Camera cap not removed?", logger_name="vision")
-            ros_utils.speak("Hey!   Remove my camera cap!", self._speak_publisher)
+            ros_utils.speak("Hey!   Remove my camera cap!", self._pub_audio)
 
 
 if __name__ == '__main__':
