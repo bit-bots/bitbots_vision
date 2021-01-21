@@ -4,7 +4,7 @@ How to train YOLO
 
 We currently use YOLO as our neural network for ball and goalpost detection.
 We are considering to use more classes e.g. robots, but you should be mostly fine to just follow this tutorial even after those changes.
-Our images and annotations are from the ImageTagger.
+Our images and annotations are from the `ImageTagger <https://imagetagger.bit-bots.de>`_.
 
 After following this tutorial you should have a trained YOLO network that is able to detect balls and goalposts at a decent framerate in the RoboCup Soccer context.
 
@@ -61,5 +61,4 @@ For these steps you can just follow the guide provided in the `official reposito
 In the end you will find a trained yolo in the backup folder of your darknet directory.
 If you want to use the OpenVINO toolkit to execute the YOLO like we do, you should have a look at
 :doc:`OpenVINO <../yolo_open_vino.rst>`
-
 Congrats, you have successfully trained a YOLO for the RoboCup Soccer context.
