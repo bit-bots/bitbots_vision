@@ -28,13 +28,13 @@ Download Images
 
 You should download the images to the workstation you intend to train your YOLO on instead of your local computer.
 If you are a BitBot this is probably the CL04 or CL05.
-After you now know which image sets you want to use it is time to download the images of these sets.
+After you now know which image sets you want to use, it is time to download the images of these sets.
 You can just download them using the provided `script
 <https://imagetagger.bit-bots.de/images/imageset/imagetagger_dl_script.py>`_.
 If you execute it with
 ``./imagetagger_dl_script.py id1 id2 id3``
 you can download all of your image sets with one command.
-You have to replace id1 with your corresponding id and can use as many or as few image sets as you want for this command.
+You have to replace the ``ids`` with your corresponding id and can use as many or as few image sets as you want for this command.
 
 Download Annotations
 --------------------
@@ -59,4 +59,7 @@ Now we have prepared everything and can now start training the YOLO.
 For these steps you can just follow the guide provided in the `official repository
 <https://github.com/AlexeyAB/darknet#how-to-train-tiny-yolo-to-detect-your-custom-objects>`_.
 In the end you will find a trained yolo in the backup folder of your darknet directory.
+If you want to use the OpenVINO toolkit to execute the YOLO like we do, you should have a look at
+:doc:`OpenVINO <../yolo_open_vino.rst>`
+
 Congrats, you have successfully trained a YOLO for the RoboCup Soccer context.
