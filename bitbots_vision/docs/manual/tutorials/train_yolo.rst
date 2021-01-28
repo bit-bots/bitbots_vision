@@ -68,3 +68,5 @@ Troubleshooting
 
 If there is an error when you start the training, you might have to specify you want to use CUDA-10.
 This can be done with: ``export PATH=/usr/local/cuda-10.0/bin:$PATH``
+
+If you want to use multiple GPUs, you can use ``-gpus 0,1`` to use both gpus or e.g. ``-gpus 1`` if you only want to use the gpu with ID 1.
