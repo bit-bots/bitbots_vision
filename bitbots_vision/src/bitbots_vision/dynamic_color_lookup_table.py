@@ -106,7 +106,7 @@ class DynamicColorLookupTable:
         # type: (Config) -> None
         """
         This method is called by the 'vision_config'-message subscriber.
-        
+
         :param Config msg: 'vision_config'-message subscriber
         :return: None
         """
@@ -203,7 +203,10 @@ class DynamicColorLookupTable:
 
         # Skip images to constrain node to maximum FPS
         time = rospy.get_rostime()
-        if self._max_fps == 0.0 or (time - self._last_time).to_sec() < (1 / self._max_fps):
+        if (time - self._last_time).to_sec() < 0:  # Time reset happened, probably rosbag looped
+            self._last_time = time
+            return
+        if self._max_fps <= 0.0 or (time - self._last_time).to_sec() < (1 / self._max_fps):
             return
         self._last_time = time
 

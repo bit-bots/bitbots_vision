@@ -168,8 +168,6 @@ class Vision:
         # Maximum offset for balls over the convex field boundary
         self._goal_post_field_boundary_y_offset = config['goal_post_field_boundary_y_offset']
 
-        self._use_dynamic_color_lookup_table = config['dynamic_color_lookup_table_active']
-
         # Which line type should we publish?
         self._use_line_points = config['line_detector_use_line_points']
         self._use_line_mask = config['line_detector_use_line_mask']
@@ -233,13 +231,12 @@ class Vision:
         if ros_utils.config_param_change(self._config, config,
                 r'^field_color_detector_|dynamic_color_lookup_table_') and not config['field_color_detector_use_hsv']:
             # Check if the dynamic color lookup table field color detector or the static field color detector should be used
-            if self._use_dynamic_color_lookup_table:
+            if config['dynamic_color_lookup_table_active']:
                 # Set dynamic color lookup table field color detector
                 self._field_color_detector = color.DynamicPixelListColorDetector(
                     config,
                     self._package_path)
             else:
-                self._use_dynamic_color_lookup_table = False
                 # Unregister old subscriber
                 if self._sub_dynamic_color_lookup_table_msg_topic is not None:
                     # self._sub_dynamic_color_lookup_table_msg_topic.unregister()  # Do not use this method, does not work
@@ -252,8 +249,6 @@ class Vision:
         # Check if params changed
         if ros_utils.config_param_change(self._config, config,
                 r'^field_color_detector_|field_color_detector_use_hsv') and config['field_color_detector_use_hsv']:
-            # Deactivate dynamic color lookup table
-            self._use_dynamic_color_lookup_table = False
             # Unregister old subscriber
             if self._sub_dynamic_color_lookup_table_msg_topic is not None:
                 # self._sub_dynamic_color_lookup_table_msg_topic.unregister()  # Do not use this method, does not work
@@ -413,7 +408,7 @@ class Vision:
         """
         self._sub_image = ros_utils.create_or_update_subscriber(self._config, config, self._sub_image, 'ROS_img_msg_topic', Image, callback=self._image_callback, queue_size=config['ROS_img_msg_queue_size'], buff_size=60000000) # https://github.com/ros/ros_comm/issues/536
 
-        if self._use_dynamic_color_lookup_table:
+        if isinstance(self._field_color_detector, color.DynamicPixelListColorDetector):
             self._sub_dynamic_color_lookup_table_msg_topic = ros_utils.create_or_update_subscriber(self._config, config, self._sub_dynamic_color_lookup_table_msg_topic, 'ROS_dynamic_color_lookup_table_msg_topic', ColorLookupTable, callback=self._field_color_detector.color_lookup_table_callback, queue_size=1, buff_size=2 ** 20)
 
     def _image_callback(self, image_msg):
@@ -624,7 +619,7 @@ class Vision:
 
         # Check, if field mask image should be published
         if self._publish_field_mask_image:
-            if self._use_dynamic_color_lookup_table:
+            if isinstance(self._field_color_detector, color.DynamicPixelListColorDetector):
                 # Mask image
                 dyn_field_mask = self._field_color_detector.get_mask_image()
                 static_field_mask = self._field_color_detector.get_static_mask_image()
