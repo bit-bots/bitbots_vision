@@ -380,9 +380,8 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         _base_color_lookup_table = np.copy(self._color_lookup_table)
 
         # The global is needed to transfer the new message data to the main thread
-        global _transfer_color_lookup_table_data
-        _transfer_color_lookup_table_data = None
-        self._transfer_color_lookup_table_data_mutex = Lock()
+        global _transfer_color_lookup_table_data_mutex
+        _transfer_color_lookup_table_data_mutex = Lock()
 
     def set_image(self, image):
         # type: (np.array) -> None
@@ -413,7 +412,6 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
             mask = self._static_mask
             if mask is None:  # Check for cached static mask
                 mask = self._static_mask = self._mask_image(self._image, _base_color_lookup_table)
-
         return mask
 
     def _mask_image(self, image, color_lookup_table=None):
@@ -426,17 +424,6 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         :return np.array: masked image
         """
         if color_lookup_table is None:
-            # Lookup if there is another color lookup table available
-            global _transfer_color_lookup_table_data
-            if _transfer_color_lookup_table_data is not None:
-                # Copy data from shared memory
-                with self._transfer_color_lookup_table_data_mutex:
-                    data = _transfer_color_lookup_table_data
-                    _transfer_color_lookup_table_data = None
-
-                    # Decode color lookup table message
-                    self._decode_color_lookup_table(data)
-
             global _dyn_color_lookup_table
             color_lookup_table = _dyn_color_lookup_table
         return VisionExtensions.maskImg(image, color_lookup_table)
@@ -448,10 +435,12 @@ class DynamicPixelListColorDetector(PixelListColorDetector):
         :param ColorLookupTableMessage msg: ColorLookupTableMessage
         :return: None
         """
-        global _transfer_color_lookup_table_data
-        with self._transfer_color_lookup_table_data_mutex:
-            # Set data
-            _transfer_color_lookup_table_data = msg
+        global _transfer_color_lookup_table_data_mutex
+        if _transfer_color_lookup_table_data_mutex.locked():
+            return
+
+        with _transfer_color_lookup_table_data_mutex:
+            self._decode_color_lookup_table(msg)  # Decode color lookup table message
 
     def _decode_color_lookup_table(self, msg):
         # type: (ColorLookupTableMessage) -> None
