@@ -1,12 +1,13 @@
 import os
 import re
+import itertools
 import rospy
 import yaml
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Point, PolygonStamped
 from dynamic_reconfigure.encoding import Config as DynamicReconfigureConfig
-from humanoid_league_msgs.msg import BallInImage, BallInImageArray, LineInformationInImage, LineSegmentInImage, ObstacleInImageArray, \
-    ObstacleInImage, GoalPostInImageArray, GoalPostInImage, Audio, RegionOfInterestWithImage
+from humanoid_league_msgs.msg import BallInImage, BallInImageArray, LineInformationInImage, LineSegmentInImage, LineIntersectionInImage, \
+     ObstacleInImageArray, ObstacleInImage, GoalPostInImageArray, GoalPostInImage, Audio, RegionOfInterestWithImage
 from bitbots_msgs.msg import Config
 
 """
@@ -386,12 +387,13 @@ def build_field_boundary_polygon_msg(header, field_boundary):
         field_boundary_msg.polygon.points.append(Point(point[0], point[1], 0))
     return field_boundary_msg
 
-def build_line_information_in_image_msg(header, line_segments):
+def build_line_information_in_image_msg(header, line_segments, line_intersections):
     """
     Builds a LineInformationInImage that consists of line segments
 
     :param header: ros header of the new message. Mostly the header of the image
     :param line_segments: A list of LineSegmentInImage messages
+    :param line_intersections: A list of LineIntersectionInImage messages
     :return: Final LineInformationInImage message
     """
     # Create message
@@ -401,7 +403,26 @@ def build_line_information_in_image_msg(header, line_segments):
     line_msg.header.stamp = header.stamp
     # Set line segments
     line_msg.segments = line_segments
+    #Set line intersections
+    line_intersections.intersections = line_intersections
     return line_msg
+
+def build_line_intersection_in_image_msgs(header, intersections, intersection_type):
+
+    intersections_with_type = [tuple(intersection, intersection_type) for intersection in intersections]
+
+    output = []
+    for intersection, intersection_type in intersections_with_type:
+        intersection_msg = LineIntersectionInImage()
+        intersection_msg.type = intersection_type
+        intersection_msg.point = Point(
+            intersection.get_center_x(),
+            intersection.get_center_y(), 0)
+        intersection_msg.confidence = intersection.get_rating()
+        output.append(intersection_msg)
+    return output
+
+
 
 def build_image_msg(header, image, desired_encoding="passthrough"):
     """

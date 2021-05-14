@@ -266,6 +266,11 @@ class Vision:
         field_boundary_detector_class = field_boundary.FieldBoundaryDetector.get_by_name(
             config['field_boundary_detector_search_method'])
 
+        # Set dummy line itersection finders
+        self._x_intersection_detector = candidate.DummyCandidateFinder()
+        self._t_intersection_detector = candidate.DummyCandidateFinder()
+        self._l_intersection_detector = candidate.DummyCandidateFinder()
+
         # Set the field boundary detector
         self._field_boundary_detector = field_boundary_detector_class(
             config,
@@ -345,6 +350,11 @@ class Vision:
             # Check if we use the yolo robot detection
             if "robot" in self._yolo.get_classes():
                 self._obstacle_detector = yolo_handler.YoloRobotDetector(config, self._yolo)
+            # Check if we use the intersection detection
+            if "robot" in self._yolo.get_classes():
+                self._x_intersection_detector = yolo_handler.YoloXIntersectionDetector(config, self._yolo)
+                self._t_intersection_detector = yolo_handler.YoloTIntersectionDetector(config, self._yolo)
+                self._l_intersection_detector = yolo_handler.YoloLIntersectionDetector(config, self._yolo)
 
         # Check if  tpu version of yolo ball/goalpost detector is used
         if config['neural_network_type'] in ['yolo_ncs2']:
@@ -368,6 +378,11 @@ class Vision:
             # Check if we use the yolo robot detection
             if "robot" in self._yolo.get_classes():
                 self._obstacle_detector = yolo_handler.YoloRobotDetector(config, self._yolo)
+            # Check if we use the intersection detection
+            if "robot" in self._yolo.get_classes():
+                self._x_intersection_detector = yolo_handler.YoloXIntersectionDetector(config, self._yolo)
+                self._t_intersection_detector = yolo_handler.YoloTIntersectionDetector(config, self._yolo)
+                self._l_intersection_detector = yolo_handler.YoloLIntersectionDetector(config, self._yolo)
 
         # Set the other obstacle detectors
         self._red_obstacle_detector = obstacle.ColorObstacleDetector(
@@ -388,13 +403,11 @@ class Vision:
         self._register_or_update_all_subscribers(config)
 
         # Define Modules that should run their calculations (modules should exist, therefore its located here)
-        self._conventional_modules = [
+        self._conventional_modules = [  # TODO evaluate if we relly want the obstacle detector in here because is can be a yolo
             self._field_color_detector,
             self._white_color_detector,
             self._red_color_detector,
             self._blue_color_detector,
-            self._unknown_obstacle_detector,
-            self._obstacle_detector,
             self._line_detector,
         ]
 
@@ -499,6 +512,9 @@ class Vision:
             self._goalpost_detector,
             self._line_detector,
             self._ball_detector,
+            self._x_intersection_detector,
+            self._t_intersection_detector,
+            self._l_intersection_detector,
             self._debug_image_creator,
         ]
 
@@ -660,6 +676,14 @@ class Vision:
                 line_mask,
                 color=(255, 0, 0),
                 opacity=0.8)
+
+        ######################
+        # Line intersections #
+        ######################
+
+        self._x_intersection_detector.get_candidates()
+        self._t_intersection_detector.get_candidates()
+        self._l_intersection_detector.get_candidates()
 
         ##################
         # Field boundary #
