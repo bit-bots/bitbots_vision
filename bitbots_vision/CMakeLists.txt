@@ -58,3 +58,18 @@ add_custom_command(
 
 enable_bitbots_docs()
 
+if (CATKIN_ENABLE_TESTING)
+    catkin_download_test_data(
+      81-test_nagoya_game_d_00095.png
+      http://data.bit-bots.de/bitbots_test/images/81-test_nagoya_game_d_00095.png
+      MD5 6ce76435a0db5074550abe3b1bd32449
+    )
+    catkin_download_test_data(
+      img_fake_cam_000800.PNG
+      http://data.bit-bots.de/bitbots_test/images/img_fake_cam_000800.PNG
+      MD5 3c0785e02afd7b1ac3da35cf78717c6f
+    )
+    set(ENV{CATKIN_BUILD_BITBOTS_VISION} ${CMAKE_CURRENT_BINARY_DIR})
+    find_package(catkin REQUIRED COMPONENTS bitbots_test)
+    enable_bitbots_tests()
+endif()
