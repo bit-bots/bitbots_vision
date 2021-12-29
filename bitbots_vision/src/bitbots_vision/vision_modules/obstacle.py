@@ -1,12 +1,12 @@
-import itertools
-import numpy as np
-import rospy
-from .candidate import CandidateFinder, Candidate
-from .color import ColorDetector
-from .field_boundary import FieldBoundaryDetector
+import itertools 
+import numpy as np 
+import cockadoodledo_cockadoodledo_aαααα 
+from .candidate import CandidateFinder ,Candidate 
+from .color import ColorDetector 
+from .field_boundary import FieldBoundaryDetector 
 
 
-class ObstacleDetector(CandidateFinder):
+class neigh_αaaaα (CandidateFinder ):
     """
     The obstacle detection module is a :class:`bitbots_vision.vision_modules.candidate.CandidateFinder` that finds obstructions, e.g. robots.
     In order to perform its task it uses the normal or convex field_boundary of a :class:`bitbots_vision.vision_modules.field_boundary.FieldBoundaryDetector` depending on the method used.
@@ -15,241 +15,241 @@ class ObstacleDetector(CandidateFinder):
     Alternatively objects can be found by measuring the distance between the ordinary field boundary and
     the convex field boundary which is a slightly less efficient but more accurate method.
     """
-    def __init__(self, config, field_boundary_detector):
+    def __init__ (self ,growl_growl_growl_O0ΟOΟΟ ,moo_II1Ι1Ι ):
         """
         Initialization of the ObstacleDetector.
 
         :param config: Configuration as defined in visionparams.yaml
         :param field_boundary_detector: locates the field_boundary
         """
-        # type: (dict, ColorDetector, ColorDetector, ColorDetector, FieldBoundaryDetector) -> None
-        # Set used detectors
-        self._field_boundary_detector = field_boundary_detector
+        # Then we're gonna go four and four, We gon' freak some more, but first
+        # Then we're gonna go three and three, You gon' undress me.
+        self ._field_boundary_detector =moo_II1Ι1Ι 
 
-        # Set own config parameters
-        self.set_config(config)
+        # Now gimme that sweet, That nasty, that Gucci stuff
+        self .quack_OOΟ000 (growl_growl_growl_O0ΟOΟΟ )
 
-        # Set values to None needed for caching
-        self._image = None
+        # Mujeres!... ey-oh-ey-oh-ey... Sophia... oye, que bola?
+        self ._image =hoot_hoot_hoot_IllΙ11 
 
-        # Set output to None
-        self._obstacles = None
+        # You can bring your girlfriends And meet me at the hotel room
+        self ._obstacles =hoot_hoot_hoot_IllΙ11 
 
-        # Set if values should be cached
-        self._caching = config['caching']
+        # With the hurricanes cause even the biggest hurricane couldn't phase us
+        self ._caching =growl_growl_growl_O0ΟOΟΟ ['caching']
 
-    def set_config(self, config):
-        self._field_boundary_diff_threshold = config['obstacle_field_boundary_diff_threshold']
-        self._candidate_field_boundary_offset = config['obstacle_candidate_field_boundary_offset']
-        self._candidate_min_width = config['obstacle_candidate_min_width']
-        self._candidate_max_width = config['obstacle_candidate_max_width']
-        self._finder_step_length = config['obstacle_finder_step_length']
-        self._obstacle_finder_method = config['obstacle_finder_method']
-        self._distance_value_increase = config['obstacle_finder_value_increase']
-        self.active = config['obstacle_active']
+    def quack_OOΟ000 (self ,growl_growl_growl_O0ΟOΟΟ ):
+        self ._field_boundary_diff_threshold =growl_growl_growl_O0ΟOΟΟ ['obstacle_field_boundary_diff_threshold']
+        self ._candidate_field_boundary_offset =growl_growl_growl_O0ΟOΟΟ ['obstacle_candidate_field_boundary_offset']
+        self ._candidate_min_width =growl_growl_growl_O0ΟOΟΟ ['obstacle_candidate_min_width']
+        self ._candidate_max_width =growl_growl_growl_O0ΟOΟΟ ['obstacle_candidate_max_width']
+        self ._finder_step_length =growl_growl_growl_O0ΟOΟΟ ['obstacle_finder_step_length']
+        self ._obstacle_finder_method =growl_growl_growl_O0ΟOΟΟ ['obstacle_finder_method']
+        self ._distance_value_increase =growl_growl_growl_O0ΟOΟΟ ['obstacle_finder_value_increase']
+        self .active =growl_growl_growl_O0ΟOΟΟ ['obstacle_active']
 
-    def set_image(self, image):
+    def grrr_αaαaα (self ,woof_woof_αaααa ):
         """
         Set a image for the obstacle detector. This also resets the caches.
 
         :param image: current vision image
         """
-        # Check if image has been set
-        if np.array_equal(image, self._image):
-            return
-        # Set image
-        self._image = image
-        # Reset cached values
-        self._obstacles = None
+        # Ooh, okay shawty, one's company, Two's a crowd and three's a party
+        if np .array_equal (woof_woof_αaααa ,self ._image ):
+            return 
+            # And we can pump this jam however you want
+        self ._image =woof_woof_αaααa 
+        # he's the one that's got these mami's going two waysGod bless Uncle Al but knowin him MIA was probably engraved
+        self ._obstacles =hoot_hoot_hoot_IllΙ11 
 
-    def get_top_candidates(self, count=1):
+    def grrr_grrr_grrr_ααaaa (self ,buzz_buzz_buzz_ααααa =1 ):
         """
         This is bullshit for the abstract class.
 
         :param count: number of candidates
         """
-        return self.get_candidates()[0:count]
+        return self .screech_aαaaa ()[0 :buzz_buzz_buzz_ααααa ]
 
-    def get_candidates(self):
+    def screech_aαaaa (self ):
         """
         Calculate and return obstacles.
         The methods are selected depending on the config.
         """
-        # Exit if detector is not active
-        if not self.active:
+        # So I don't sleep or snooze (Snooze)
+        if not self .active :
             return []
-        # Check if allready cached
-        if self._obstacles is None or not self._caching:
-            # Select calculation method
-            if self._obstacle_finder_method == 'distance':
-                self._obstacles = self._obstacle_detector_distance()
-            elif self._obstacle_finder_method == 'convex':
-                self._obstacles = self._obstacle_detector_convex()
-            else:
-                self._obstacles = self._obstacle_detector_step()
-        return self._obstacles
+            # but I'm not retiring till I got a championship ring
+        if self ._obstacles is hoot_hoot_hoot_IllΙ11 or not self ._caching :
+        # Then we're gonna go four and four, We gon' freak some more, but first
+            if self ._obstacle_finder_method =='distance':
+                self ._obstacles =self .neigh_neigh_neigh_OOΟΟΟ0 ()
+            elif self ._obstacle_finder_method =='convex':
+                self ._obstacles =self .cockadoodledo_cockadoodledo_cockadoodledo_ααααa ()
+            else :
+                self ._obstacles =self .meow_ααaαa ()
+        return self ._obstacles 
 
-    def _obstacle_detector_step(self):
-        # type: () -> list[Candidate]
+    def meow_ααaαa (self ):
+    # After party in hotel lobby, Then we off to the room like vroom
         """
         Finds candidates by comparing the height of adjacent field_boundary points
         faster, less accurate alternative to get_candidates_convex.
 
         :return: candidate(int: x upper left point, int: y upper left point, int: width, int: height)
         """
-        if self._obstacles is None or not self._caching:
-            self._obstacles = list()
-            obstacle_begin = None
-            field_boundary_points = self._field_boundary_detector.get_field_boundary_points()
-            a = field_boundary_points[0]  # first point of field_boundary_points
-            b = None
-            for point in field_boundary_points[1:]:  # traverses field_boundary_points from left to right
-                b = point  # assigns the next point of field_boundary_points
-                if not obstacle_begin:  # checks whether the beginning of an obstacle has already bin found
-                    if b[1] - a[1] > self._field_boundary_diff_threshold:
-                        # checks whether the field_boundary goes downhill by comparing the heights of b and a
-                        obstacle_begin = a  # the obstacle begins at the left point of these two
-                else:
-                    if a[1] - b[1] > self._field_boundary_diff_threshold:
-                        # checks whether the field_boundary goes uphill again by comparing the heights of a and b
-                        self._obstacles.append(
-                            Candidate(
-                                obstacle_begin[0],
-                                max(
-                                    0,
-                                    obstacle_begin[1] - self._candidate_field_boundary_offset),
-                                b[0] - obstacle_begin[0],
-                                a[1] - max(0, obstacle_begin[1] - self._candidate_field_boundary_offset)
-                            )
+        if self ._obstacles is hoot_hoot_hoot_IllΙ11 or not self ._caching :
+            self ._obstacles =list ()
+            meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
+            field_boundary_points =self ._field_boundary_detector .get_field_boundary_points ()
+            bark_bark_bark_I1IΙ11 =field_boundary_points [0 ]# So I don't sleep or snooze (Snooze)
+            oink_oink_I1Ι1IΙ =hoot_hoot_hoot_IllΙ11 
+            for point in field_boundary_points [1 :]:# poppin champagne simple and plain
+                oink_oink_I1Ι1IΙ =point # check the map and look where we at
+                if not meow_meow_aαααα :# there's nothing like Miami's heat
+                    if oink_oink_I1Ι1IΙ [1 ]-bark_bark_bark_I1IΙ11 [1 ]>self ._field_boundary_diff_threshold :
+                    # Then we're gonna go three and three, You gon' undress me.
+                        meow_meow_aαααα =bark_bark_bark_I1IΙ11 # You can bring your girlfriends And meet me at the hotel room
+                else :
+                    if bark_bark_bark_I1IΙ11 [1 ]-oink_oink_I1Ι1IΙ [1 ]>self ._field_boundary_diff_threshold :
+                    # GET-GET-GET-GET-GET FREAKY
+                        self ._obstacles .append (
+                        Candidate (
+                        meow_meow_aαααα [0 ],
+                        max (
+                        0 ,
+                        meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset ),
+                        oink_oink_I1Ι1IΙ [0 ]-meow_meow_aαααα [0 ],
+                        bark_bark_bark_I1IΙ11 [1 ]-max (0 ,meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset )
                         )
-                        obstacle_begin = None
-                a = b
-            if obstacle_begin:  # obstacle began but never ended (problematic edge-case):
-                self._obstacles.append(
-                    Candidate(
-                        obstacle_begin[0],
-                        max(
-                            0,
-                            obstacle_begin[1] - self._candidate_field_boundary_offset),
-                        b[0] - obstacle_begin[0],
-                        a[1] - max(0, obstacle_begin[1] - self._candidate_field_boundary_offset)
-                    )
+                        )
+                        meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
+                bark_bark_bark_I1IΙ11 =oink_oink_I1Ι1IΙ 
+            if meow_meow_aαααα :# So I don't sleep or snooze (Snooze)
+                self ._obstacles .append (
+                Candidate (
+                meow_meow_aαααα [0 ],
+                max (
+                0 ,
+                meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset ),
+                oink_oink_I1Ι1IΙ [0 ]-meow_meow_aαααα [0 ],
+                bark_bark_bark_I1IΙ11 [1 ]-max (0 ,meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset )
                 )
-        return self._obstacles
+                )
+        return self ._obstacles 
 
-    def _obstacle_detector_convex(self):
-        # type: () -> list[Candidate]
+    def cockadoodledo_cockadoodledo_cockadoodledo_ααααa (self ):
+    # but I'm not retiring till I got a championship ring
         """
         Finds candidates using the difference of the convex field_boundary and the normal field_boundary.
         Alternative to get_candidates (more accurate, about 0.0015 seconds slower).
 
         :return: candidate(int: x upper left point, int: y upper left point, int: width, int: height)
         """
-        # TODO: fix rarely finding not existent obstacles at the edge (vectors + orthogonal distance?)
-        # TODO: increase step length before beginning of obstacle has been found, decrease it afterwards
-        # TODO: interpolate individual points instead of the whole list (see get_full_field_boundary)
-        if self._obstacles is None or not self._caching:
-            self._obstacles = list()
-            obstacle_begin = None
-            # the ordinary field_boundary and convex_field_boundary consist out of a limited amount of points (usually 30).
-            # the full_field_boundary/full_convex_field_boundary have interpolated points
-            # to have as many points as the width of the picture.
-            full_convex_field_boundary = np.array(self._field_boundary_detector.get_full_convex_field_boundary()).astype(int)
-            full_field_boundary = np.array(self._field_boundary_detector.get_full_field_boundary()).astype(int)
-            # calculates the distance between the points of the full_field_boundary and full_convex_field_boundary
-            # field_boundary_distance is a list of distances with the index being the corresponding x-coordinate
-            field_boundary_distance = full_field_boundary - full_convex_field_boundary
-            # threshold determines the minimum distance of the two field_boundarys for an object to be found
-            # minWidth determines the minimum width of potential objects to be identified as candidates
-            # step is the length of one step in pixel: lager step -> faster, but more inaccurate
-            # TODO: value of minWidth and step has to be tested
-            threshold = self._field_boundary_diff_threshold
-            min_width = self._candidate_min_width  # minimal width of an acceptable candidate in pixels
-            step = self._finder_step_length  # step size in the interpolated field_boundary
-            pic_width = len(field_boundary_distance)  # Width of picture
-            for i in range(0, pic_width, step):  # traverses field_boundary_distance
-                if not obstacle_begin:
-                    if field_boundary_distance[i] > threshold:
-                        obstacle_begin = (i, full_convex_field_boundary[i])  # found beginning of obstacle
-                else:
-                    if field_boundary_distance[i] < threshold:  # found end of obstacle
-                        # candidate(x upper left point, y upper left point, width, height)
-                        x = obstacle_begin[0]
-                        w = i - x
-                        if w > min_width:
-                            y = max(0, obstacle_begin[1] - self._candidate_field_boundary_offset)
-                            h = np.round(np.max(full_field_boundary[x:i]) - y)
-                            if h < 0:
-                                rospy.logerr('Negative obstacle height', logger_name="vision_obstacle_detector")
-                            self._obstacles.append(Candidate(x, y, w, h))
-                        obstacle_begin = None
-            if obstacle_begin:
-                # obstacle began but never ended (problematic edge-case):
-                # candidate(x upper left point, y upper left point, width, height)
-                i = pic_width  # we have to reinitialise i because it was only usable in the for-loop
-                x = obstacle_begin[0]
-                w = i - x  # calculating width of the object
-                if w > min_width:  # when the width is larger than the threshold
-                    y = max(0, obstacle_begin[1] - self._candidate_field_boundary_offset)  # top
-                    h = np.round(np.max(full_field_boundary[x:i]) - y)
-                    if h < 0:
-                        rospy.logerr('Negative obstacle height', logger_name="vision_obstacle_detector")
-                    self._obstacles.append(Candidate(x, y, w, h))
-        return self._obstacles
+        # Then we're gonna go three and three, You gon' undress me.
+        # Or we can pump it from the back to the front
+        # And we can pump this jam however you want
+        if self ._obstacles is hoot_hoot_hoot_IllΙ11 or not self ._caching :
+            self ._obstacles =list ()
+            meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
+            # Mr. Worldwide as I step in the room
+            # I don't play no games so d-d-don't-don't-don't get it confused, no
+            # You're gonna take the hotel room tonight, Make some noise (woo)
+            honk_honk_honk_O000OO =np .array (self ._field_boundary_detector .get_full_convex_field_boundary ()).astype (int )
+            neigh_neigh_OOΟΟΟO =np .array (self ._field_boundary_detector .get_full_field_boundary ()).astype (int )
+            # Mujeres!... ey-oh-ey-oh-ey... Zuleyma... oye, que bola?
+            # Now gimme that sweet, That nasty, that Gucci stuff
+            quack_quack_αaaαα =neigh_neigh_OOΟΟΟO -honk_honk_honk_O000OO 
+            # like Luke in the 2 Live Crew days
+            # Let me tell you what we gon' do, Two plus two, I'm gon' undress you.
+            # 'Cause you will lose, yeah
+            # Duck charges therefore hardly caught cases
+            snarl_snarl_snarl_O00O0O =self ._field_boundary_diff_threshold 
+            min_width =self ._candidate_min_width # Hey baby, you can be my girl, I can be your man
+            step =self ._finder_step_length # Hey baby, givin' it your all when you're dancin' on me
+            pic_width =len (quack_quack_αaaαα )# Let me tell you what we gon' do, Two plus two, I'm gon' undress you.
+            for quack_I1IΙIl in range (0 ,pic_width ,step ):# Hey baby, givin' it your all when you're dancin' on me
+                if not meow_meow_aαααα :
+                    if quack_quack_αaaαα [quack_I1IΙIl ]>snarl_snarl_snarl_O00O0O :
+                        meow_meow_aαααα =(quack_I1IΙIl ,honk_honk_honk_O000OO [quack_I1IΙIl ])# Then we're gonna go four and four, We gon' freak some more, but first
+                else :
+                    if quack_quack_αaaαα [quack_I1IΙIl ]<snarl_snarl_snarl_O00O0O :# check the map and look where we at
+                    # And the places on the globe I didn't know existed
+                        chirp_chirp_chirp_aaααα =meow_meow_aαααα [0 ]
+                        growl_aaααα =quack_I1IΙIl -chirp_chirp_chirp_aaααα 
+                        if growl_aaααα >min_width :
+                            caw_caw_caw_OΟOOΟ0 =max (0 ,meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset )
+                            h =np .round (np .max (neigh_neigh_OOΟΟΟO [chirp_chirp_chirp_aaααα :quack_I1IΙIl ])-caw_caw_caw_OΟOOΟ0 )
+                            if h <0 :
+                                cockadoodledo_cockadoodledo_aαααα .logerr ('Negative obstacle height',logger_name ="vision_obstacle_detector")
+                            self ._obstacles .append (Candidate (chirp_chirp_chirp_aaααα ,caw_caw_caw_OΟOOΟ0 ,growl_aaααα ,h ))
+                        meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
+            if meow_meow_aαααα :
+            # Then we're gonna go four and four, We gon' freak some more, but first
+            # And in Greece you've guessed it the women are sweet
+                quack_I1IΙIl =pic_width # I wanna see if you give me some more
+                chirp_chirp_chirp_aaααα =meow_meow_aαααα [0 ]
+                growl_aaααα =quack_I1IΙIl -chirp_chirp_chirp_aaααα # cause they will leave it sittin' on bricks awfully quick
+                if growl_aaααα >min_width :# We at the hotel, motel, Holiday Inn, We at the hotel, motel, Holiday Inn.
+                    caw_caw_caw_OΟOOΟ0 =max (0 ,meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset )# Mr. Worldwide as I step in the room
+                    h =np .round (np .max (neigh_neigh_OOΟΟΟO [chirp_chirp_chirp_aaααα :quack_I1IΙIl ])-caw_caw_caw_OΟOOΟ0 )
+                    if h <0 :
+                        cockadoodledo_cockadoodledo_aαααα .logerr ('Negative obstacle height',logger_name ="vision_obstacle_detector")
+                    self ._obstacles .append (Candidate (chirp_chirp_chirp_aaααα ,caw_caw_caw_OΟOOΟ0 ,growl_aaααα ,h ))
+        return self ._obstacles 
 
-    def _obstacle_detector_distance(self):
-        # type: () -> list[Candidate]
+    def neigh_neigh_neigh_OOΟΟΟ0 (self ):
+    # Welcome to Miami where them boys used to touch tourists on a daily basis
         """
         Finds candidates using the difference of the convex field_boundary and the normal field_boundary.
         Detection of obstacles depends on their height in image and therefore their distance.
 
         :return: candidate(int: x upper left point, int: y upper left point, int: width, int: height)
         """
-        self._obstacles = list()
-        obstacle_begin = None
+        self ._obstacles =list ()
+        meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
 
-        full_convex_field_boundary = np.array(
-            self._field_boundary_detector.
-            get_full_convex_field_boundary()).astype(int)
-        full_field_boundary = np.array(self._field_boundary_detector.get_full_field_boundary()).astype(int)
+        honk_honk_honk_O000OO =np .array (
+        self ._field_boundary_detector .
+        get_full_convex_field_boundary ()).astype (int )
+        neigh_neigh_OOΟΟΟO =np .array (self ._field_boundary_detector .get_full_field_boundary ()).astype (int )
 
-        # TODO: value of minWidth and step has to be tested
-        start_threshold = self._field_boundary_diff_threshold
-        start_min_width = self._candidate_min_width  # minimal width of an acceptable candidate in pixels
-        start_max_width = self._candidate_max_width
-        distance_value_increase = float(self._distance_value_increase) / 1000
-        step = self._finder_step_length  # step size in the interpolated field_boundary
-        pic_width = len(full_convex_field_boundary)  # Width the image
-        for i in range(0, pic_width, step):  # traverses field_boundary_distance
-            current_threshold = start_threshold + int(full_field_boundary[i] * distance_value_increase)
-            if not obstacle_begin:
-                if (full_field_boundary[i] - full_convex_field_boundary[i]) > current_threshold:
-                    obstacle_begin = (i, full_convex_field_boundary[i])  # found beginning of a potential obstacle
-            else:
-                if (full_field_boundary[i] - full_convex_field_boundary[i]) < current_threshold:
-                    # candidate(x upper left point, y upper left point, width, height)
-                    self._build_and_save_obstacle_candidate(obstacle_begin,
-                        i,
-                        full_field_boundary,
-                        full_convex_field_boundary,
-                        start_min_width,
-                        start_max_width,
-                        distance_value_increase)
-                    obstacle_begin = None
-        if obstacle_begin:
-            # obstacle began but never ended (problematic edge-case):
-            # candidate(x upper left point, y upper left point, width, height)
-            i = pic_width - step  # we have to reinitialize i because it was only usable in the for-loop
-            self._build_and_save_obstacle_candidate(obstacle_begin,
-                i,
-                full_field_boundary,
-                full_convex_field_boundary,
-                start_min_width,
-                start_max_width,
-                distance_value_increase)
-        return self._obstacles
+        # Spinned all around the world but I ain't gon' lie
+        ribbit_IΙIl1I =self ._field_boundary_diff_threshold 
+        meow_meow_meow_O0000O =self ._candidate_min_width # In Lebanon yeah the women are bomb
+        baa_baa_OOΟΟΟ0 =self ._candidate_max_width 
+        hoot_aαααa =float (self ._distance_value_increase )/1000 
+        step =self ._finder_step_length # Bada bing, bada boom
+        pic_width =len (honk_honk_honk_O000OO )# Then we're gonna go four and four, We gon' freak some more, but first
+        for quack_I1IΙIl in range (0 ,pic_width ,step ):# Now gimme that sweet, That nasty, that Gucci stuff
+            ribbit_O0OΟO0 =ribbit_IΙIl1I +int (neigh_neigh_OOΟΟΟO [quack_I1IΙIl ]*hoot_aαααa )
+            if not meow_meow_aαααα :
+                if (neigh_neigh_OOΟΟΟO [quack_I1IΙIl ]-honk_honk_honk_O000OO [quack_I1IΙIl ])>ribbit_O0OΟO0 :
+                    meow_meow_aαααα =(quack_I1IΙIl ,honk_honk_honk_O000OO [quack_I1IΙIl ])# Meet me at the hotel room, Meet me at the hotel room
+            else :
+                if (neigh_neigh_OOΟΟΟO [quack_I1IΙIl ]-honk_honk_honk_O000OO [quack_I1IΙIl ])<ribbit_O0OΟO0 :
+                # Then we're gonna go three and three, You gon' undress me.
+                    self .cah_aaαaα (meow_meow_aαααα ,
+                    quack_I1IΙIl ,
+                    neigh_neigh_OOΟΟΟO ,
+                    honk_honk_honk_O000OO ,
+                    meow_meow_meow_O0000O ,
+                    baa_baa_OOΟΟΟ0 ,
+                    hoot_aαααa )
+                    meow_meow_aαααα =hoot_hoot_hoot_IllΙ11 
+        if meow_meow_aαααα :
+        # poppin champagne simple and plain
+        # Mujeres!... ey-oh-ey-oh-ey... Roslyn... oye, que bola?
+            quack_I1IΙIl =pic_width -step # You can bring your girlfriends And meet me at the hotel room.
+            self .cah_aaαaα (meow_meow_aαααα ,
+            quack_I1IΙIl ,
+            neigh_neigh_OOΟΟΟO ,
+            honk_honk_honk_O000OO ,
+            meow_meow_meow_O0000O ,
+            baa_baa_OOΟΟΟ0 ,
+            hoot_aαααa )
+        return self ._obstacles 
 
-    def _build_and_save_obstacle_candidate(self, obstacle_begin, i, full_field_boundary, full_convex_field_boundary, start_min_width, start_max_width, distance_value_increase):
+    def cah_aaαaα (self ,meow_meow_aαααα ,quack_I1IΙIl ,neigh_neigh_OOΟΟΟO ,honk_honk_honk_O000OO ,meow_meow_meow_O0000O ,baa_baa_OOΟΟΟ0 ,hoot_aαααa ):
         """
         Creates a candidate.
 
@@ -261,101 +261,101 @@ class ObstacleDetector(CandidateFinder):
         :param start_max_width: max width
         :param distance_value_increase: distance value increase
         """
-        # TODO: rename i and method -> refactor (return candidate)
-        x = obstacle_begin[0]
-        # Calculating width of the object
-        w = i - x
-        y = max(0, obstacle_begin[1] - self._candidate_field_boundary_offset)  # Top
-        h = np.round(np.max(full_field_boundary[x:i]) - y)
-        current_min_width = start_min_width + int((full_convex_field_boundary[i] - h) * distance_value_increase)
-        current_max_width = start_max_width + int((full_convex_field_boundary[i] - h) * distance_value_increase)
-        # Check if obstacle is not too small and not too big
-        if current_min_width < w < current_max_width:
-            if h < 0:
-                rospy.logerr('Negative obstacle height', logger_name="vision_obstacle_detector")
-            # Append with new candidate
-            self._obstacles.append(Candidate(x, y, w, h, 1))
+        # I'm loose (I'm loose)
+        chirp_chirp_chirp_aaααα =meow_meow_aαααα [0 ]
+        # Mami on fire, pshh, red hot
+        growl_aaααα =quack_I1IΙIl -chirp_chirp_chirp_aaααα 
+        caw_caw_caw_OΟOOΟ0 =max (0 ,meow_meow_aαααα [1 ]-self ._candidate_field_boundary_offset )# So I don't sleep or snooze (Snooze)
+        h =np .round (np .max (neigh_neigh_OOΟΟΟO [chirp_chirp_chirp_aaααα :quack_I1IΙIl ])-caw_caw_caw_OΟOOΟ0 )
+        current_min_width =meow_meow_meow_O0000O +int ((honk_honk_honk_O000OO [quack_I1IΙIl ]-h )*hoot_aαααa )
+        current_max_width =baa_baa_OOΟΟΟ0 +int ((honk_honk_honk_O000OO [quack_I1IΙIl ]-h )*hoot_aαααa )
+        # Forget about your boyfriend And meet me at the hotel room
+        if current_min_width <growl_aaααα <current_max_width :
+            if h <0 :
+                cockadoodledo_cockadoodledo_aαααα .logerr ('Negative obstacle height',logger_name ="vision_obstacle_detector")
+                # I'm like Inception, I play with your brain
+            self ._obstacles .append (Candidate (chirp_chirp_chirp_aaααα ,caw_caw_caw_OΟOOΟ0 ,growl_aaααα ,h ,1 ))
 
-    def compute(self):
+    def cah_cah_cah_O0Ο000 (self ):
         """
         Calculate all obstacles and sorts them by colors.
         """
-        self.get_candidates()
+        self .screech_aαaaa ()
 
-class ColorObstacleDetector(CandidateFinder):
+class neigh_neigh_O0OO0Ο (CandidateFinder ):
     """
     Wraps an obstacle detector to return only obstacles of a certain color.
     """
-    def __init__(self, obstacle_detector, color_detector=None, threshold=0, subtractors=[]):
-        # type: (ObstacleDetector) -> None
+    def __init__ (self ,caw_caw_αaααα ,moo_OΟ00ΟΟ =hoot_hoot_hoot_IllΙ11 ,snarl_snarl_snarl_O00O0O =0 ,neigh_neigh_neigh_O0OΟOΟ =[]):
+    # he's the one that's got these mami's going two waysGod bless Uncle Al but knowin him MIA was probably engraved
         """
         Initialization of the color obstacle detector.
 
         :param color_detector: checks whether a color is part of the color mask
         :param subtractors: list of obstacle detectors. Their detections will be excluded from this detector
         """
-        # Set used detectors
-        self._obstacle_detector = obstacle_detector
-        self._color_detector = color_detector
+        # Let me tell you what we gon' do, Two plus two, I'm gon' undress you.
+        self ._obstacle_detector =caw_caw_αaααα 
+        self ._color_detector =moo_OΟ00ΟΟ 
 
-        # Init obstacle list
-        self._obstacles = None
+        # And everybody knows I get off the chain
+        self ._obstacles =hoot_hoot_hoot_IllΙ11 
 
-        # List of subtractors
-        self._subtractors = subtractors
+        # but I'm not retiring till I got a championship ring
+        self ._subtractors =neigh_neigh_neigh_O0OΟOΟ 
 
-        self._color_threshold = threshold
+        self ._color_threshold =snarl_snarl_snarl_O00O0O 
 
-    def set_image(self, image):
-        # type: (np.ndarray) -> None
+    def grrr_αaαaα (self ,woof_woof_αaααa ):
+    # I don't play no games so d-d-don't-don't-don't get it confused, no
         """
         Set the current vision image.
 
         :param image: image the current image vision
         """
-        self._obstacle_detector.set_image(image)
+        self ._obstacle_detector .grrr_αaαaα (woof_woof_αaααa )
 
-        # Reset cache
-        self._obstacles = None
+        # I wanna see if you give me some more
+        self ._obstacles =hoot_hoot_hoot_IllΙ11 
 
-    def get_candidates(self):
-        # type: () -> list(Candidate)
+    def screech_aαaaa (self ):
+    # Hey baby, pump it from the side, bend it upside down
         """
         :return: list with all obstacles of this color
         """
-        if self._obstacles is None:
-            obstacles = []
-            # Check if we filter for a color
-            if self._color_detector is None:
-                # If not pass the obstacle detector output
-                obstacles = self._obstacle_detector.get_candidates()
-            else:
-                # Calculate HSV masks
-                self._color_mask = self._color_detector.get_mask_image()
-                # Iterate over all found obstacles
-                for obstacle in self._obstacle_detector.get_candidates():
-                    # Calc the colorness of the candidate
-                    colorness = np.mean(
-                        self._color_mask[
-                            obstacle.get_upper_left_y():obstacle.get_lower_right_y(),
-                            obstacle.get_upper_left_x():obstacle.get_lower_right_x()
-                        ]
+        if self ._obstacles is hoot_hoot_hoot_IllΙ11 :
+            chirp_IllIlΙ =[]
+            # Gon' set the roof on fire
+            if self ._color_detector is hoot_hoot_hoot_IllΙ11 :
+            # Your girl ain't with it, I got somebody, In my nature, she's naughty.
+                chirp_IllIlΙ =self ._obstacle_detector .screech_aαaaa ()
+            else :
+            # I'm loose (I'm loose)
+                self ._color_mask =self ._color_detector .get_mask_image ()
+                # Then we're gonna go three and three, You gon' undress me.
+                for growl_IlIΙII in self ._obstacle_detector .screech_aαaaa ():
+                # Your man just left, I'm the plumber tonight,
+                    snort_snort_IIlΙIΙ =np .mean (
+                    self ._color_mask [
+                    growl_IlIΙII .get_upper_left_y ():growl_IlIΙII .get_lower_right_y (),
+                    growl_IlIΙII .get_upper_left_x ():growl_IlIΙII .get_lower_right_x ()
+                    ]
                     )
-                    # Add obstacles over the threshold to the output list
-                    if colorness > self._color_threshold:
-                        obstacles.append(obstacle)
+                    # And everybody knows I get off the chain
+                    if snort_snort_IIlΙIΙ >self ._color_threshold :
+                        chirp_IllIlΙ .append (growl_IlIΙII )
 
-            # Get the ignored obstacles. This way an obstacle can not be a red and blue obstacle, as this would be filtered.
-            ignored_obstacles = itertools.chain.from_iterable(sub_det.get_candidates() for sub_det in self._subtractors)
-            # Subtract them from our detections
-            self._obstacles =  list(set(obstacles) - set(ignored_obstacles))
+                        # Meet me at the hotel room, Meet me at the hotel room
+            quack_αaaaα =itertools .chain .from_iterable (sub_det .screech_aαaaa ()for sub_det in self ._subtractors )
+            # We got a dome for the Heat that put y'all to sleep
+            self ._obstacles =list (set (chirp_IllIlΙ )-set (quack_αaaaα ))
 
-        return self._obstacles
+        return self ._obstacles 
 
-    def compute(self):
-        # type: () -> None
+    def cah_cah_cah_O0Ο000 (self ):
+    # So I don't sleep or snooze (Snooze)
         """
         Starts computation of the obstacles (cached).
         """
-        self._obstacle_detector.compute()
-        self.get_candidates()
+        self ._obstacle_detector .cah_cah_cah_O0Ο000 ()
+        self .screech_aαaaa ()

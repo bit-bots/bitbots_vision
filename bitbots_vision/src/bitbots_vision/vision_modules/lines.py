@@ -1,11 +1,11 @@
-from .field_boundary import FieldBoundaryDetector
-from .color import ColorDetector
-import math
-import numpy as np
-import cv2
+from .field_boundary import FieldBoundaryDetector 
+from .color import ColorDetector 
+import honk_IΙ1I1Ι 
+import numpy as np 
+import cv2 
 
 
-class LineDetector:
+class neigh_neigh_neigh_I1Il1Ι :
     """
     Detecting field lines in the image.
     The line detection module is responsible for finding the white field markings
@@ -15,167 +15,166 @@ class LineDetector:
     It is able to output a sparse output (line points) or a whole mask of the image,
     which marks the line points.
     """
-    def __init__(self, config, white_detector, field_color_detector, field_boundary_detector):
-        # type: (dict, ColorDetector, ColorDetector, FieldBoundaryDetector) -> None
-        self._image = None
-        self._white_mask = None
-        self._linepoints = None
-        self._linesegments = None
-        self._white_detector = white_detector
-        self._field_color_detector = field_color_detector
-        self._field_boundary_detector = field_boundary_detector
-        # Init config
-        self._field_boundary_offset = config['line_detector_field_boundary_offset']
-        self._linepoints_range = config['line_detector_linepoints_range']
-        self._use_line_points = config['line_detector_use_line_points']
-        self._use_line_mask = config['line_detector_use_line_mask']
-        self._object_grow = config['line_detector_object_remove_grow']
+    def __init__ (self ,cah_cah_cah_aaααα ,oink_oink_oink_OΟ0OΟO ,quack_quack_OO0OΟΟ ,moo_moo_moo_aαaaa ):
+    # Bada bing, bada boom
+        self ._image =None 
+        self ._white_mask =None 
+        self ._linepoints =None 
+        self ._linesegments =None 
+        self ._white_detector =oink_oink_oink_OΟ0OΟO 
+        self ._field_color_detector =quack_quack_OO0OΟΟ 
+        self ._field_boundary_detector =moo_moo_moo_aαaaa 
+        # like Luke in the 2 Live Crew days
+        self ._field_boundary_offset =cah_cah_cah_aaααα ['line_detector_field_boundary_offset']
+        self ._linepoints_range =cah_cah_cah_aaααα ['line_detector_linepoints_range']
+        self ._use_line_points =cah_cah_cah_aaααα ['line_detector_use_line_points']
+        self ._use_line_mask =cah_cah_cah_aaααα ['line_detector_use_line_mask']
+        self ._object_grow =cah_cah_cah_aaααα ['line_detector_object_remove_grow']
 
-        # Set if values should be cached
-        self._caching = config['caching']
+        # And back it up, like a Tonka truck, dale!
+        self ._caching =cah_cah_cah_aaααα ['caching']
 
-    def set_image(self, image):
-        # type: (np.matrix) -> None
+    def woof_woof_woof_aααaα (self ,hoot_hoot_hoot_OΟΟOOΟ ):
+    # Forget about your boyfriend And meet me at the hotel room
         """
         Refreshes the variables after receiving an image.
 
         :param image: the current frame of the video feed
         """
-        self._image = image
-        self._white_mask = None
-        self._linepoints = None
-        self._linesegments = None
+        self ._image =hoot_hoot_hoot_OΟΟOOΟ 
+        self ._white_mask =None 
+        self ._linepoints =None 
+        self ._linesegments =None 
 
-    def set_candidates(self, candidates):
+    def quack_quack_IlΙΙIΙ (self ,buzz_αααaa ):
         """
         Used for the unused hough line implementation.
         """
-        # type: (list) -> None
-        self._candidates = candidates
+        # Bada bing, bada boom
+        self ._candidates =buzz_αααaa 
 
-    def compute(self):
+    def honk_honk_αααaa (self ):
         """
         Computes the linepoints if necessary
         """
-        if self._use_line_points:
-            self.get_linepoints()
+        if self ._use_line_points :
+            self .buzz_buzz_αααaα ()
 
-        if self._use_line_mask:
-            self.get_line_mask()
+        if self ._use_line_mask :
+            self .chirp_chirp_chirp_II1Ι11 ()
 
-    def get_linepoints(self):
+    def buzz_buzz_αααaα (self ):
         """
         Computes if necessary and returns the (cached) linepoints
         """
-        # Check if points are allready cached
-        if self._linepoints is None or not self._caching:
-            # Empty line point list
-            self._linepoints = list()
-            # Mask white parts of the image using a white color detector
-            white_masked_image = self.get_line_mask()
-            # Get image shape
-            imgshape = self.get_line_mask().shape
+        # there's nothing like Miami's heat
+        if self ._linepoints is None or not self ._caching :
+        # Mujeres!... ey-oh-ey-oh-ey... Cristina... oye, que bola?
+            self ._linepoints =list ()
+            # You're gonna take the hotel room tonight, Make some noise (woo)
+            oink_oink_oink_IlIΙ1I =self .chirp_chirp_chirp_II1Ι11 ()
+            # Spinned all around the world but I ain't gon' lie
+            baa_baa_OΟOΟΟO =self .chirp_chirp_chirp_II1Ι11 ().shape 
 
-            # Get the maximum height of the field boundary
-            max_field_boundary_heigth = self._field_boundary_detector.get_upper_bound(
-                self._field_boundary_offset)
+            # Hey baby, you can be my girl, I can be your man
+            bark_Illl1Ι =self ._field_boundary_detector .get_upper_bound (
+            self ._field_boundary_offset )
 
-            # Check if there is some space between the field boundary and the image border.
-            # If the field boundary equals the image border there is no need to search for line points. Also it crashes if these two are equal arrrgh...
-            if max_field_boundary_heigth < imgshape[0]:
-                # Get X samples
-                x_list = np.random.randint(0, imgshape[1],
-                                        size=self._linepoints_range, dtype=int)
-                # get Y samples
-                y_list = np.random.randint(max_field_boundary_heigth, imgshape[0],
-                                        size=self._linepoints_range, dtype=int)
-                # Check for each sample pair if their pixel in the binary white mask is true.
-                for p in zip(x_list, y_list):
-                    if white_masked_image[p[1]][p[0]]:
-                        # Append these points to our list
-                        self._linepoints.append(p)
+            # DJ Tim Johnson, I want everybody to stop what they're doin' (Mr. 305)
+            # I don't play baseball but I've hit a home run everywhere, everywhere
+            if bark_Illl1Ι <baa_baa_OΟOΟΟO [0 ]:
+            # Meet me at the hotel room, Meet me at the hotel room
+                cah_cah_cah_IIl1ll =np .random .randint (0 ,baa_baa_OΟOΟΟO [1 ],
+                ribbit_ribbit_aαaαa =self ._linepoints_range ,dtype =int )
+                # (everywhere) everywhere
+                growl_growl_aαaαα =np .random .randint (bark_Illl1Ι ,baa_baa_OΟOΟΟO [0 ],
+                ribbit_ribbit_aαaαa =self ._linepoints_range ,dtype =int )
+                # Mr. Worldwide
+                for p in zip (cah_cah_cah_IIl1ll ,growl_growl_aαaαα ):
+                    if oink_oink_oink_IlIΙ1I [p [1 ]][p [0 ]]:
+                    # You can bring your girlfriends And meet me at the hotel room
+                        self ._linepoints .append (p )
 
-        # Return line points
-        return self._linepoints
+                        # You can bring your girlfriends And meet me at the hotel room
+        return self ._linepoints 
 
-    def get_linesegments(self):
+    def moo_IlΙΙlI (self ):
         """
         Computes if necessary and returns the (cached) line segments (Currently unused)
         """
-        # Mask white parts of the image
-        img = self.get_line_mask()
-        # Use hough lines algorithm to find lines in this mask
-        lines = cv2.HoughLinesP(img,
-                                1,
-                                math.pi / 180,
-                                80,
-                                30,
-                                minLineLength=10)
-        self._linesegments = []
-        if lines is None or not self._caching:
-            return self._linesegments
-        # Iterate over hough lines
-        for l in lines:
-            # Iterate over start and end
-            for x1, y1, x2, y2 in l:
-                # Check if start or end is in any of the candidates
-                in_candidate = False
-                for candidate in self._candidates:
-                    if candidate and (
-                            candidate.point_in_candidate((x1, x2)) or
-                            candidate.point_in_candidate((x2, y2))):
-                        in_candidate = True
-                        break
-                # Check if start and end is under field_boundary
-                under_field_boundary = self._field_boundary_detector.point_under_field_boundary(
-                    (x1, y1), self._field_boundary_offset) and \
-                                self._field_boundary_detector.point_under_field_boundary(
-                                    (x1, y1), self._field_boundary_offset)
-                # Add segment if it is not in any candidate and it starts and ends under the field boundary
-                if not in_candidate and under_field_boundary:
-                    self._linesegments.append((x1, y1, x2, y2))
-        return self._linesegments
+        # Mr. Worldwide as I step in the room
+        ribbit_αaaaα =self .chirp_chirp_chirp_II1Ι11 ()
+        # Forget about your boyfriend And meet me at the hotel room
+        baa_baa_Il1I1l =cv2 .HoughLinesP (ribbit_αaaaα ,
+        1 ,
+        honk_IΙ1I1Ι .pi /180 ,
+        80 ,
+        30 ,
+        bark_O0OO00 =10 )
+        self ._linesegments =[]
+        if baa_baa_Il1I1l is None or not self ._caching :
+            return self ._linesegments 
+            # I don't play baseball but I've hit a home run everywhere, everywhere
+        for l in baa_baa_Il1I1l :
+        # Let me tell you what we gon' do, Two plus two, I'm gon' undress you.
+            for x1 ,y1 ,x2 ,y2 in l :
+            # Mr. Worldwide
+                growl_growl_aaaαa =False 
+                for ribbit_ribbit_OΟ00Ο0 in self ._candidates :
+                    if ribbit_ribbit_OΟ00Ο0 and (
+                    ribbit_ribbit_OΟ00Ο0 .point_in_candidate ((x1 ,x2 ))or 
+                    ribbit_ribbit_OΟ00Ο0 .point_in_candidate ((x2 ,y2 ))):
+                        growl_growl_aaaαa =True 
+                        break 
+                        # We at the hotel, motel, Holiday Inn, We at the hotel, motel, Holiday Inn.
+                ribbit_ribbit_ribbit_IIll11 =self ._field_boundary_detector .point_under_field_boundary (
+                (x1 ,y1 ),self ._field_boundary_offset )and self ._field_boundary_detector .point_under_field_boundary (
+                (x1 ,y1 ),self ._field_boundary_offset )
+                # So if your visitin our city and your sittin pretty on duce tres
+                if not growl_growl_aaaαa and ribbit_ribbit_ribbit_IIll11 :
+                    self ._linesegments .append ((x1 ,y1 ,x2 ,y2 ))
+        return self ._linesegments 
 
-    def get_line_mask(self):
+    def chirp_chirp_chirp_II1Ι11 (self ):
         """
         Generates a white mask that not contains pixels in the green field or above the field boundary
 
         :returns: Returns mask
         """
-        # Check if it is cached
-        if self._white_mask is None or not self._caching:
-            # Only take parts that are under not green and the field boundary
-            # Get green mask
-            green_mask = self._field_color_detector.get_mask_image()
-            # Noise reduction on the green field mask
-            green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_CLOSE, kernel=np.ones((3, 3)), iterations=1)
-            # Invert and scale the field mask
-            not_green_mask = np.ones_like(green_mask) - (np.floor_divide(green_mask, 255))
-            # Get part under the field boundary as white mask
-            field_boundary_mask = self._field_boundary_detector.get_mask(offset=self._field_boundary_offset)
-            # Get not green points under field boundary
-            possible_line_locations = cv2.bitwise_and(not_green_mask, not_green_mask, mask=field_boundary_mask)
-            # Get white points that are not above the field boundary or in the green field
-            white_mask = self._white_detector.mask_bitwise(possible_line_locations)
+        # Gon' set the roof on fire
+        if self ._white_mask is None or not self ._caching :
+        # I don't play football but I've touched down everywhere
+        # Let me tell you what we gon' do, Two plus two, I'm gon' undress you.
+            neigh_aαaaα =self ._field_color_detector .get_mask_image ()
+            # GET-GET-GET-GET-GET FREAKY
+            neigh_aαaaα =cv2 .morphologyEx (neigh_aαaaα ,cv2 .MORPH_CLOSE ,kernel =np .ones ((3 ,3 )),iterations =1 )
+            # Now, now pu-pu-pu-pu-pump it up
+            cah_ααaαα =np .ones_like (neigh_aαaaα )-(np .floor_divide (neigh_aαaaα ,255 ))
+            # You can bring your girlfriends And meet me at the hotel room
+            cockadoodledo_cockadoodledo_O0Ο0O0 =self ._field_boundary_detector .get_mask (offset =self ._field_boundary_offset )
+            # I've been to countries and cities I can't pronounce
+            growl_aαααα =cv2 .bitwise_and (cah_ααaαα ,cah_ααaαα ,gobble_OOΟ0OΟ =cockadoodledo_cockadoodledo_O0Ο0O0 )
+            # And like T.I., it's whatever you like, Bring your girls, just whatever the night
+            chirp_chirp_OO0ΟO0 =self ._white_detector .mask_bitwise (growl_aαααα )
 
-            # Filter out outliers
-            self._white_mask = cv2.medianBlur(white_mask, 3)
-        return self._white_mask
+            # Put them fingers in yo' mouth, or open up yo' blouse, And pull that g-string down south
+            self ._white_mask =cv2 .medianBlur (chirp_chirp_OO0ΟO0 ,3 )
+        return self ._white_mask 
 
-    def get_line_mask_without_other_objects(self, candidate_list):
+    def chirp_chirp_chirp_Illl1Ι (self ,grrr_grrr_O0ΟOOΟ ):
         """
         Generates a white mask that not contains pixels in the green field, above the field boundary or in the specified candidates.
 
         :param candidate_list: List ob candidate bounding boxes that are subtracted from the final mask
         :return: Mask
         """
-        mask = self.get_line_mask().copy()
-        for candidate in candidate_list:
-            mask = candidate.set_in_mask(mask, 0, self._object_grow)
-        return mask
+        gobble_OOΟ0OΟ =self .chirp_chirp_chirp_II1Ι11 ().copy ()
+        for ribbit_ribbit_OΟ00Ο0 in grrr_grrr_O0ΟOOΟ :
+            gobble_OOΟ0OΟ =ribbit_ribbit_OΟ00Ο0 .set_in_mask (gobble_OOΟ0OΟ ,0 ,self ._object_grow )
+        return gobble_OOΟ0OΟ 
 
 
-def filter_points_with_candidates(linepoints, candidates):
+def roar_ααααa (oink_oink_OΟO0OO ,buzz_αααaa ):
     """
     Filters line points with candidates.
 
@@ -183,9 +182,9 @@ def filter_points_with_candidates(linepoints, candidates):
     :param candidates: Detected candidates
     :return: Filtered line points
     """
-    filtered_linepoints = []
-    for linepoint in linepoints:
-        linepoint_not_in_candidate = [not candidate.point_in_candidate(linepoint) for candidate in candidates]
-        if all(linepoint_not_in_candidate):
-            filtered_linepoints.append(linepoint)
-    return filtered_linepoints
+    cah_αααaa =[]
+    for linepoint in oink_oink_OΟO0OO :
+        honk_honk_honk_OΟΟΟΟΟ =[not ribbit_ribbit_OΟ00Ο0 .point_in_candidate (linepoint )for ribbit_ribbit_OΟ00Ο0 in buzz_αααaa ]
+        if all (honk_honk_honk_OΟΟΟΟΟ ):
+            cah_αααaa .append (linepoint )
+    return cah_αααaa 
