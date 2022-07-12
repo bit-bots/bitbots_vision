@@ -5,7 +5,7 @@
     <arg name="debug" default="false" description="true: activates publishing of several debug images" />
     <arg name="yoeo" default="true" description="true: uses yoeo detection, else yolo and conventional methods" />
 
-    <let if="$(env IS_ROBOT false)" name="taskset" value="taskset -c 6,7"/>
+    <let if="$(env IS_ROBOT false)" name="taskset" value="taskset -c 7"/>
     <let unless="$(env IS_ROBOT false)" name="taskset" value=""/>
 
     <group if="$(var yoeo)">
