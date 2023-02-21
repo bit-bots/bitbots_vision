@@ -97,7 +97,7 @@ class Vision(Node):
         ros_utils.set_general_parameters(["caching"])
 
         # Initially update team color
-        ros_utils.update_team_color(self)
+        ros_utils.update_own_team_color(self)
 
         self._dynamic_reconfigure_callback(self.get_parameters_by_prefix("").values())
 
