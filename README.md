@@ -1,6 +1,8 @@
 Bit-Bots Vision
 ===============
 
+## Archived ⚠️ This repository has been moved [here](https://github.com/bit-bots/bitbots_meta)!
+
 [![CodeFactor](https://www.codefactor.io/repository/github/bit-bots/bitbots_vision/badge)](https://www.codefactor.io/repository/github/bit-bots/bitbots_vision)
 &nbsp;&nbsp;
 &nbsp;&nbsp;
