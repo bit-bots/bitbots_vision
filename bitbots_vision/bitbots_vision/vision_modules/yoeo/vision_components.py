@@ -8,7 +8,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from typing import Dict, Optional, List, Tuple
 
-from bitbots_msgs.msg import Audio, GameState
+from bitbots_msgs.msg import Audio
+from game_controller_hl_interfaces.msg import GameState
 from soccer_vision_2d_msgs.msg import BallArray, GoalpostArray, RobotArray, Robot
 from bitbots_vision.vision_modules import debug, ros_utils, candidate
 
